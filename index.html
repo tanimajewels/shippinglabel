@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,6 +19,13 @@
         input, select { padding: 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 14px; }
         input:focus { border-color: #f1c40f; outline: none; }
         
+        /* --- SALES MODULE CSS --- */
+        .sales-module { grid-column: span 2; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 10px; }
+        .item-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; align-items: flex-end; }
+        .item-row label { font-size: 10px; color: #888; }
+        .ship-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px; }
+        .btn-reset-sales { background: #e74c3c; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
+
         .btn-group { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
         button { flex: 1; padding: 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; min-width: 120px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-add { background: #2c3e50; color: white; }
@@ -52,10 +58,8 @@
         .logo-container { width: 150px; height: 150px; display: flex; justify-content: center; align-items: center; }
         .logo-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
         
-        .to-section strong:first-child { font-size: 13pt; } 
-        .from-section { font-size: 10.5pt; border-top: 1px dashed #000; padding-top: 8px; margin-top: 2px; color: #1a1a1a; line-height: 1.3; }
-        .from-section strong:first-child { font-size: 11.5pt; }
         .bold-data { font-weight: bold; font-size: 13pt; text-transform: uppercase; }
+        .from-section { font-size: 10.5pt; border-top: 1px dashed #000; padding-top: 8px; margin-top: 2px; color: #1a1a1a; line-height: 1.3; }
         #label-counter { margin-top: 15px; font-weight: bold; color: #7f8c8d; text-align: center; }
         @media print { .container, .history-section, .label-btns, .search-box, #label-counter, #syncStatus { display: none !important; } body { padding: 0; background: white; } #print-area { margin: 0; display: grid !important; } }
     </style>
@@ -70,7 +74,7 @@
         <button class="btn-split" onclick="splitAddress()">✨ Auto-Fill & Capitalize</button>
     </div>
     
-    <strong>2. Shipping Details:</strong>
+    <strong>2. Shipping & Sales Details:</strong>
     <div class="form-group">
         <div class="field-container full-width">
             <label>Customer Name</label>
@@ -103,6 +107,33 @@
         <div class="field-container full-width">
             <label>Mobile Number</label>
             <input type="text" id="phone">
+        </div>
+
+        <div class="sales-module">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <strong>Items & Profit Tracking</strong>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-reset-sales" onclick="resetSalesModule()">Reset Items</button>
+                    <select id="itemCount" style="width:120px; padding:5px;" onchange="renderItemRows()">
+                        <option value="0">0 Items</option>
+                        <option value="1">1 Item</option>
+                        <option value="2">2 Items</option>
+                        <option value="3">3 Items</option>
+                        <option value="4">4 Items</option>
+                        <option value="5">5 Items</option>
+                    </select>
+                </div>
+            </div>
+            <div id="itemRowsContainer"></div>
+            <div class="ship-row" id="shippingDataRow" style="display:none;">
+                <div class="field-container"><label>Ship. Collected</label><input type="number" id="shipColl" placeholder="0" oninput="calcTotalProfit()"></div>
+                <div class="field-container"><label>Ship. Paid</label><input type="number" id="shipPaid" placeholder="0" oninput="calcTotalProfit()"></div>
+                <div class="field-container">
+                    <label>Summary</label>
+                    <div style="font-size: 11px; color: #666;">Gross: <span id="grossTotalBox" style="font-weight:bold; color:#34495e;">₹ 0</span></div>
+                    <div style="font-size: 11px; color: #666;">Profit: <span id="totalProfitBox" style="font-weight:bold; color:#27ae60;">₹ 0</span></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -142,19 +173,90 @@
 
 <script>
     let customers = JSON.parse(localStorage.getItem('tanima_customers')) || [];
-    let lastProcessedData = null; 
     let count = 0;
     let editId = null;
-
     const LOGO_URL = "qr.png"; 
-
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzT8HfWYl2evtoeFrLRptyTzm9CqYYDfbTEffr4JQEmewWpVcT1876Xj5Ie6ueeVb2i/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxqbCFSIKCYh0JGyVuw50z_bCHo0Cm3G0LGdNOOFVJGdvMzpHUE80GP9Qzh3Z4uFsTO/exec";
 
     window.onload = renderHistory;
 
     function toTitleCase(str) {
         if (!str) return "";
         return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }
+
+    // --- SALES FUNCTIONS ---
+    function renderItemRows() {
+        const num = document.getElementById('itemCount').value;
+        const container = document.getElementById('itemRowsContainer');
+        const shipRow = document.getElementById('shippingDataRow');
+        container.innerHTML = '';
+        if(num > 0) {
+            shipRow.style.display = 'grid';
+            for(let i=1; i<=num; i++) {
+                container.innerHTML += `
+                <div class="item-row">
+                    <div><label>Item ${i} Name</label><input type="text" class="i-name" placeholder="Item Name"></div>
+                    <div><label>Sales Price</label><input type="number" class="i-sales" placeholder="0" oninput="calcTotalProfit()"></div>
+                    <div><label>Cost Price</label><input type="number" class="i-cost" placeholder="0" oninput="calcTotalProfit()"></div>
+                    <div style="text-align:center;"><label>Profit</label><div class="i-profit" style="font-weight:bold; color:#27ae60;">0</div></div>
+                </div>`;
+            }
+        } else { shipRow.style.display = 'none'; }
+    }
+
+    function resetSalesModule() {
+        if(confirm("Clear all items and price values?")) {
+            document.getElementById('itemCount').value = "0";
+            document.getElementById('itemRowsContainer').innerHTML = '';
+            document.getElementById('shippingDataRow').style.display = 'none';
+            document.getElementById('shipColl').value = '';
+            document.getElementById('shipPaid').value = '';
+            document.getElementById('totalProfitBox').innerText = '₹ 0';
+            document.getElementById('grossTotalBox').innerText = '₹ 0';
+        }
+    }
+
+    function calcTotalProfit() {
+        let totalProfit = 0;
+        let grossSales = 0;
+        const sales = document.querySelectorAll('.i-sales');
+        const costs = document.querySelectorAll('.i-cost');
+        const profits = document.querySelectorAll('.i-profit');
+        
+        sales.forEach((s, i) => {
+            const saleVal = parseFloat(s.value) || 0;
+            const costVal = parseFloat(costs[i].value) || 0;
+            const p = saleVal - costVal;
+            profits[i].innerText = p;
+            totalProfit += p;
+            grossSales += saleVal;
+        });
+        
+        const shipColl = parseFloat(document.getElementById('shipColl').value) || 0;
+        const shipPaid = parseFloat(document.getElementById('shipPaid').value) || 0;
+        totalProfit += (shipColl - shipPaid);
+        grossSales += shipColl;
+        
+        document.getElementById('totalProfitBox').innerText = '₹ ' + totalProfit;
+        document.getElementById('grossTotalBox').innerText = '₹ ' + grossSales;
+    }
+
+    function getItemsData() {
+        const items = [];
+        const names = document.querySelectorAll('.i-name');
+        const sales = document.querySelectorAll('.i-sales');
+        const costs = document.querySelectorAll('.i-cost');
+        names.forEach((n, i) => {
+            if(n.value) {
+                items.push({
+                    itemName: n.value,
+                    sale: parseFloat(sales[i].value) || 0,
+                    cost: parseFloat(costs[i].value) || 0
+                });
+            }
+        });
+        return items;
     }
 
     function updateStatus(mode, current = 0, total = 0) {
@@ -171,14 +273,11 @@
         if (phoneMatch) document.getElementById('phone').value = phoneMatch[0];
         const pinMatch = raw.match(/\b\d{6}\b/);
         if (pinMatch) document.getElementById('pincode').value = pinMatch[0];
-
         let cleanText = raw;
         if (phoneMatch) cleanText = cleanText.replace(phoneMatch[0], "");
         if (pinMatch) cleanText = cleanText.replace(pinMatch[0], "");
         cleanText = cleanText.replace(/contact|pin|mob|mobile|address|ph|phone|[:\-]/gi, "");
-
         const parts = cleanText.split(/[\n,]+/).map(item => item.trim()).filter(item => item !== "");
-        
         if(parts[0]) document.getElementById('custName').value = toTitleCase(parts[0]);
         if(parts[1]) document.getElementById('house').value = toTitleCase(parts[1]);
         if(parts[2]) document.getElementById('po').value = toTitleCase(parts[2]);
@@ -192,27 +291,56 @@
         const pin = document.getElementById('pincode').value;
         if(!name || !pin) { alert("Please enter Name and Pincode"); return; }
 
+        const salesData = {
+            items: getItemsData(),
+            shipColl: parseFloat(document.getElementById('shipColl').value) || 0,
+            shipPaid: parseFloat(document.getElementById('shipPaid').value) || 0
+        };
+
         if (editId) {
             const index = customers.findIndex(c => c.id === editId);
             if (index !== -1) {
-                customers[index] = { ...customers[index], name, house: document.getElementById('house').value, po: document.getElementById('po').value, loc: document.getElementById('location').value, dist: document.getElementById('district').value, state: document.getElementById('state').value, pin, ph: document.getElementById('phone').value };
-                lastProcessedData = customers[index];
-                
+                customers[index] = { ...customers[index], name, house: document.getElementById('house').value, po: document.getElementById('po').value, loc: document.getElementById('location').value, dist: document.getElementById('district').value, state: document.getElementById('state').value, pin, ph: document.getElementById('phone').value, sales: salesData };
                 const currentQueueIds = Array.from(document.querySelectorAll('.label')).map(el => parseInt(el.getAttribute('data-id')));
                 document.getElementById('print-area').innerHTML = '';
-                customers.forEach(c => {
-                    if (currentQueueIds.includes(c.id)) addLabelToPrintArea(c);
-                });
+                customers.forEach(c => { if (currentQueueIds.includes(c.id)) addLabelToPrintArea(c); });
             }
             editId = null;
             document.getElementById('btnText').innerText = "Add & Save Local";
             document.getElementById('mainBtn').style.background = "#2c3e50";
         } else {
-            lastProcessedData = { id: Date.now(), date: new Date().toLocaleDateString(), name, house: document.getElementById('house').value, po: document.getElementById('po').value, loc: document.getElementById('location').value, dist: document.getElementById('district').value, state: document.getElementById('state').value, pin, ph: document.getElementById('phone').value, tracking: '', status: 'Pending' };
-            customers.push(lastProcessedData);
-            addLabelToPrintArea(lastProcessedData);
-        }
+            // GENERATE SHORT ORDER ID (e.g., TJ-210326-177403)
+            const now = new Date();
+            const DD = String(now.getDate()).padStart(2, '0');
+            const MM = String(now.getMonth() + 1).padStart(2, '0');
+            const YY = String(now.getFullYear()).slice(-2);
+            
+            const datePart = DD + MM + YY;
+            const fullTimestamp = Date.now().toString();
+            const shortID = fullTimestamp.slice(-6); // Only last 6 digits
+            
+            const formattedOrderID = `TJ-${datePart}-${shortID}`;
+            const uniqueKey = Date.now(); // Full timestamp for internal ID
 
+            const newCust = { 
+                id: uniqueKey, 
+                orderID: formattedOrderID, 
+                date: now.toLocaleDateString(), 
+                name, 
+                house: document.getElementById('house').value, 
+                po: document.getElementById('po').value, 
+                loc: document.getElementById('location').value, 
+                dist: document.getElementById('district').value, 
+                state: document.getElementById('state').value, 
+                pin, 
+                ph: document.getElementById('phone').value, 
+                tracking: '', 
+                status: 'Pending', 
+                sales: salesData 
+            };
+            customers.push(newCust);
+            addLabelToPrintArea(newCust);
+        }
         saveToStorage();
         renderHistory();
         clearInputs();
@@ -221,16 +349,15 @@
     async function syncAllToCloud() {
         if (customers.length === 0) { alert("Database is empty!"); return; }
         if (!confirm(`Sync all ${customers.length} records to cloud?`)) return;
-        
         const total = customers.length;
         for (let i = 0; i < total; i++) {
             updateStatus('syncing', i + 1, total);
             try {
-                await fetch(WEB_APP_URL, { 
-                    method: "POST", 
-                    body: JSON.stringify(customers[i]), 
-                    mode: "no-cors" 
-                });
+                const payload = {...customers[i]};
+                await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({...payload, type: "LABEL"}), mode: "no-cors" });
+                if(customers[i].sales && customers[i].sales.items.length > 0) {
+                    await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({...payload, type: "SALES"}), mode: "no-cors" });
+                }
             } catch (e) { 
                 updateStatus('error'); 
                 alert(`Error syncing record ${i+1}.`);
@@ -261,9 +388,7 @@
                     ${data.state} - <strong>PIN: ${data.pin}</strong><br>
                     <strong>Mob: ${data.ph}</strong>
                 </div>
-                <div class="logo-container">
-                    <img src="${LOGO_URL}" alt="Logo">
-                </div>
+                <div class="logo-container"><img src="${LOGO_URL}" alt="Logo"></div>
             </div>
             <div class="from-section">
                 <strong>From,</strong><br>
@@ -287,11 +412,26 @@
             document.getElementById('state').value = record.state;
             document.getElementById('pincode').value = record.pin;
             document.getElementById('phone').value = record.ph;
+            
+            if(record.sales && record.sales.items.length > 0) {
+                document.getElementById('itemCount').value = record.sales.items.length;
+                renderItemRows();
+                const names = document.querySelectorAll('.i-name');
+                const sales = document.querySelectorAll('.i-sales');
+                const costs = document.querySelectorAll('.i-cost');
+                record.sales.items.forEach((it, i) => {
+                    names[i].value = it.itemName;
+                    sales[i].value = it.sale;
+                    costs[i].value = it.cost;
+                });
+                document.getElementById('shipColl').value = record.sales.shipColl;
+                document.getElementById('shipPaid').value = record.sales.shipPaid;
+                calcTotalProfit();
+            }
+
             editId = id;
             document.getElementById('btnText').innerText = "Update Local";
             document.getElementById('mainBtn').style.background = "#f39c12";
-            count--;
-            updateCounter();
             window.scrollTo(0,0);
         }
     }
@@ -300,7 +440,19 @@
         const id = parseInt(el.getAttribute('data-id'));
         const record = customers.find(c => c.id === id);
         if (record) {
-            const newData = {...record, id: Date.now()};
+            const now = new Date();
+            const DD = String(now.getDate()).padStart(2, '0');
+            const MM = String(now.getMonth() + 1).padStart(2, '0');
+            const YY = String(now.getFullYear()).slice(-2);
+            
+            const datePart = DD + MM + YY;
+            const fullTS = Date.now().toString();
+            const shortID = fullTS.slice(-6);
+            
+            const formattedOrderID = `TJ-${datePart}-${shortID}`;
+            const uniqueKey = Date.now();
+
+            const newData = {...record, id: uniqueKey, orderID: formattedOrderID};
             customers.push(newData);
             addLabelToPrintArea(newData);
             saveToStorage();
@@ -309,10 +461,7 @@
 
     function readdToQueue(id) {
         const record = customers.find(c => c.id === id);
-        if (record) {
-            addLabelToPrintArea(record);
-            window.scrollTo(0, document.body.scrollHeight);
-        }
+        if (record) { addLabelToPrintArea(record); window.scrollTo(0, document.body.scrollHeight); }
     }
 
     function removeLabel(el) { el.remove(); count = document.querySelectorAll('.label').length; updateCounter(); }
@@ -329,7 +478,7 @@
             body.innerHTML += `
                 <tr>
                     <td>${c.date}</td>
-                    <td><strong>${c.name}</strong></td>
+                    <td><strong>${c.name}</strong><br><small style="color:#888">${c.orderID}</small></td>
                     <td>${c.ph}</td>
                     <td>${c.dist}</td>
                     <td><input type="text" class="tracking-input" value="${c.tracking}" onchange="updateRecord(${masterIndex}, 'tracking', this.value)"></td>
@@ -352,14 +501,23 @@
     function updateRecord(idx, field, value) { customers[idx][field] = value; saveToStorage(); renderHistory(); }
     function deleteFromMaster(idx) { if(confirm("Delete from local?")) { customers.splice(idx, 1); saveToStorage(); renderHistory(); } }
     function saveToStorage() { localStorage.setItem('tanima_customers', JSON.stringify(customers)); }
-    function clearInputs() { ['custName', 'house', 'po', 'location', 'district', 'state', 'pincode', 'phone', 'bulkPaste'].forEach(id => document.getElementById(id).value = ''); }
+    function clearInputs() { 
+        ['custName', 'house', 'po', 'location', 'district', 'state', 'pincode', 'phone', 'bulkPaste', 'itemCount', 'shipColl', 'shipPaid'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = id === 'itemCount' ? '0' : '';
+        });
+        document.getElementById('itemRowsContainer').innerHTML = '';
+        document.getElementById('shippingDataRow').style.display = 'none';
+        document.getElementById('totalProfitBox').innerText = '₹ 0';
+        document.getElementById('grossTotalBox').innerText = '₹ 0';
+    }
     function updateCounter() { document.getElementById('label-counter').innerText = `Labels in Queue: ${count} / 8`; }
     function clearAllData() { if(confirm("Wipe local data?")) { localStorage.clear(); customers = []; document.getElementById('print-area').innerHTML = ''; count=0; renderHistory(); updateCounter(); } }
 
     function exportToCSV() {
         if(customers.length === 0) return;
-        let csv = "Date,Name,House,PO,Loc,District,State,Pin,Phone,Tracking,Status\n";
-        customers.forEach(c => { csv += `"${c.date}","${c.name}","${c.house}","${c.po}","${c.loc}","${c.dist}","${c.state}","${c.pin}","${c.ph}","${c.tracking}","${c.status}"\n`; });
+        let csv = "OrderID,Date,Name,House,PO,Loc,District,State,Pin,Phone,Tracking,Status\n";
+        customers.forEach(c => { csv += `"${c.orderID}","${c.date}","${c.name}","${c.house}","${c.po}","${c.loc}","${c.dist}","${c.state}","${c.pin}","${c.ph}","${c.tracking}","${c.status}"\n`; });
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = 'Tanima_Backup.csv'; a.click();
     }
