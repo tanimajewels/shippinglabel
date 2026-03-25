@@ -195,18 +195,36 @@
         const num = document.getElementById('itemCount').value;
         const container = document.getElementById('itemRowsContainer');
         const shipRow = document.getElementById('shippingDataRow');
+        
+        // 1. SNAPSHOT EXISTING DATA
+        const savedData = [];
+        const existingNames = document.querySelectorAll('.i-name');
+        const existingSales = document.querySelectorAll('.i-sales');
+        const existingCosts = document.querySelectorAll('.i-cost');
+        
+        existingNames.forEach((el, i) => {
+            savedData.push({
+                name: el.value,
+                sale: existingSales[i].value,
+                cost: existingCosts[i].value
+            });
+        });
+
+        // 2. REBUILD CONTAINER
         container.innerHTML = '';
         if(num > 0) {
             shipRow.style.display = 'grid';
             for(let i=1; i<=num; i++) {
+                const old = savedData[i-1] || { name: '', sale: '', cost: '' };
                 container.innerHTML += `
                 <div class="item-row">
-                    <div><label>Item ${i} Name</label><input type="text" class="i-name" placeholder="Item Name"></div>
-                    <div><label>Sales Price</label><input type="number" class="i-sales" placeholder="0" oninput="calcTotalProfit()"></div>
-                    <div><label>Cost Price</label><input type="number" class="i-cost" placeholder="0" oninput="calcTotalProfit()"></div>
+                    <div><label>Item ${i} Name</label><input type="text" class="i-name" placeholder="Item Name" value="${old.name}"></div>
+                    <div><label>Sales Price</label><input type="number" class="i-sales" placeholder="0" oninput="calcTotalProfit()" value="${old.sale}"></div>
+                    <div><label>Cost Price</label><input type="number" class="i-cost" placeholder="0" oninput="calcTotalProfit()" value="${old.cost}"></div>
                     <div style="text-align:center;"><label>Profit</label><div class="i-profit" style="font-weight:bold; color:#27ae60;">0</div></div>
                 </div>`;
             }
+            calcTotalProfit();
         } else { shipRow.style.display = 'none'; }
     }
 
@@ -314,7 +332,6 @@
             document.getElementById('btnText').innerText = "Add & Save Local";
             document.getElementById('mainBtn').style.background = "#2c3e50";
         } else {
-            // GENERATE SHORT ORDER ID (e.g., TJ-210326-177403)
             const now = new Date();
             const DD = String(now.getDate()).padStart(2, '0');
             const MM = String(now.getMonth() + 1).padStart(2, '0');
@@ -322,10 +339,10 @@
             
             const datePart = DD + MM + YY;
             const fullTimestamp = Date.now().toString();
-            const shortID = fullTimestamp.slice(-6); // Only last 6 digits
+            const shortID = fullTimestamp.slice(-6); 
             
             const formattedOrderID = `TJ-${datePart}-${shortID}`;
-            const uniqueKey = Date.now(); // Full timestamp for internal ID
+            const uniqueKey = Date.now();
 
             const newCust = { 
                 id: uniqueKey, 
