@@ -21,10 +21,15 @@
         
         /* --- SALES MODULE CSS --- */
         .sales-module { grid-column: span 2; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 10px; }
-        .item-row { display: grid; gap: 10px; margin-bottom: 10px; align-items: flex-end; }
+        .item-row { display: grid; gap: 10px; margin-bottom: 10px; align-items: flex-end; position: relative; }
         .item-row label { font-size: 10px; color: #888; }
         .ship-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px; }
         .btn-reset-sales { background: #e74c3c; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        
+        /* New Professional Buttons */
+        .btn-add-item { background: #34495e; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; margin-top: 5px; }
+        .btn-add-item:hover { background: #2c3e50; }
+        .btn-row-del { background: #e74c3c; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; line-height: 1; margin-bottom: 8px; }
 
         .btn-group { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
         button { flex: 1; padding: 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; min-width: 120px; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -112,24 +117,13 @@
         <div class="sales-module">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <strong>Items & Profit Tracking</strong>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" class="btn-reset-sales" onclick="resetSalesModule()">Reset Items</button>
-                    <select id="itemCount" style="width:120px; padding:5px;" onchange="renderItemRows()">
-                        <option value="0">0 Items</option>
-                        <option value="1">1 Item</option>
-                        <option value="2">2 Items</option>
-                        <option value="3">3 Items</option>
-                        <option value="4">4 Items</option>
-                        <option value="5">5 Items</option>
-                        <option value="6-25">...</option>
-                        <option value="10">10 Items</option>
-                        <option value="15">15 Items</option>
-                        <option value="20">20 Items</option>
-                        <option value="25">25 Items</option>   
-                    </select>
-                </div>
+                <button type="button" class="btn-reset-sales" onclick="resetSalesModule()">Reset All Items</button>
             </div>
+            
             <div id="itemRowsContainer"></div>
+            
+            <button type="button" class="btn-add-item" onclick="addNewItemRow()">+ Add New Item</button>
+
             <div class="ship-row" id="shippingDataRow" style="display:none;">
                 <div class="field-container"><label>Ship. Collected</label><input type="number" id="shipColl" placeholder="0" oninput="calcTotalProfit()"></div>
                 <div class="field-container"><label>Ship. Paid</label><input type="number" id="shipPaid" placeholder="0" oninput="calcTotalProfit()"></div>
@@ -190,62 +184,62 @@
         return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     }
 
-    // --- UPDATED SALES FUNCTIONS FOR QUANTITY ---
-    function renderItemRows() {
-        const num = document.getElementById('itemCount').value;
+    // --- NEW DYNAMIC SALES FUNCTIONS ---
+
+    function addNewItemRow(data = { name: '', qty: 1, sale: '', cost: '' }) {
         const container = document.getElementById('itemRowsContainer');
         const shipRow = document.getElementById('shippingDataRow');
+        shipRow.style.display = 'grid';
         
-        const savedData = [];
-        const existingNames = document.querySelectorAll('.i-name');
-        const existingQty = document.querySelectorAll('.i-qty');
-        const existingSales = document.querySelectorAll('.i-sales');
-        const existingCosts = document.querySelectorAll('.i-cost');
-        
-        existingNames.forEach((el, i) => {
-            savedData.push({
-                name: el.value,
-                qty: existingQty[i] ? existingQty[i].value : 1,
-                sale: existingSales[i].value,
-                cost: existingCosts[i].value
-            });
-        });
+        const rowCount = container.children.length + 1;
+        const div = document.createElement('div');
+        div.className = 'item-row';
+        div.style.gridTemplateColumns = '2fr 0.5fr 1fr 1fr 0.8fr 0.3fr';
+        div.innerHTML = `
+            <div><label class="item-index-label">Item ${rowCount} Name</label><input type="text" class="i-name" placeholder="Item Name" value="${data.name}"></div>
+            <div><label>Qty</label><input type="number" class="i-qty" value="${data.qty}" oninput="calcTotalProfit()"></div>
+            <div><label>Unit Sale</label><input type="number" class="i-sales" placeholder="0" oninput="calcTotalProfit()" value="${data.sale}"></div>
+            <div><label>Unit Cost</label><input type="number" class="i-cost" placeholder="0" oninput="calcTotalProfit()" value="${data.cost}"></div>
+            <div style="text-align:center;"><label>Profit</label><div class="i-profit" style="font-weight:bold; color:#27ae60;">0</div></div>
+            <div><button type="button" class="btn-row-del" onclick="removeItemRow(this)">×</button></div>
+        `;
+        container.appendChild(div);
+        calcTotalProfit();
+    }
 
-        container.innerHTML = '';
-        if(num > 0) {
-            shipRow.style.display = 'grid';
-            for(let i=1; i<=num; i++) {
-                const old = savedData[i-1] || { name: '', qty: 1, sale: '', cost: '' };
-                container.innerHTML += `
-                <div class="item-row" style="grid-template-columns: 2fr 0.5fr 1fr 1fr 0.8fr;">
-                    <div><label>Item ${i} Name</label><input type="text" class="i-name" placeholder="Item Name" value="${old.name}"></div>
-                    <div><label>Qty</label><input type="number" class="i-qty" value="${old.qty}" oninput="calcTotalProfit()"></div>
-                    <div><label>Unit Sale</label><input type="number" class="i-sales" placeholder="0" oninput="calcTotalProfit()" value="${old.sale}"></div>
-                    <div><label>Unit Cost</label><input type="number" class="i-cost" placeholder="0" oninput="calcTotalProfit()" value="${old.cost}"></div>
-                    <div style="text-align:center;"><label>Total Profit</label><div class="i-profit" style="font-weight:bold; color:#27ae60;">0</div></div>
-                </div>`;
-            }
-            calcTotalProfit();
-        } else { shipRow.style.display = 'none'; }
+    function removeItemRow(btn) {
+        const row = btn.parentElement.parentElement;
+        row.remove();
+        reindexItems();
+        calcTotalProfit();
+        
+        const container = document.getElementById('itemRowsContainer');
+        if(container.children.length === 0) {
+            document.getElementById('shippingDataRow').style.display = 'none';
+        }
+    }
+
+    function reindexItems() {
+        const labels = document.querySelectorAll('.item-index-label');
+        labels.forEach((label, i) => {
+            label.innerText = `Item ${i+1} Name`;
+        });
     }
 
     function calcTotalProfit() {
         let totalProfit = 0;
         let grossSales = 0;
-        const qtys = document.querySelectorAll('.i-qty');
-        const sales = document.querySelectorAll('.i-sales');
-        const costs = document.querySelectorAll('.i-cost');
-        const profits = document.querySelectorAll('.i-profit');
+        const rows = document.querySelectorAll('.item-row');
         
-        sales.forEach((s, i) => {
-            const qVal = parseFloat(qtys[i].value) || 0;
-            const saleVal = parseFloat(s.value) || 0;
-            const costVal = parseFloat(costs[i].value) || 0;
+        rows.forEach((row) => {
+            const qVal = parseFloat(row.querySelector('.i-qty').value) || 0;
+            const saleVal = parseFloat(row.querySelector('.i-sales').value) || 0;
+            const costVal = parseFloat(row.querySelector('.i-cost').value) || 0;
             
             const rowTotalSale = saleVal * qVal;
             const rowTotalProfit = (saleVal - costVal) * qVal;
             
-            profits[i].innerText = rowTotalProfit;
+            row.querySelector('.i-profit').innerText = rowTotalProfit;
             totalProfit += rowTotalProfit;
             grossSales += rowTotalSale;
         });
@@ -261,17 +255,15 @@
 
     function getItemsData() {
         const items = [];
-        const names = document.querySelectorAll('.i-name');
-        const qtys = document.querySelectorAll('.i-qty');
-        const sales = document.querySelectorAll('.i-sales');
-        const costs = document.querySelectorAll('.i-cost');
-        names.forEach((n, i) => {
-            if(n.value) {
+        const rows = document.querySelectorAll('.item-row');
+        rows.forEach((row) => {
+            const name = row.querySelector('.i-name').value;
+            if(name) {
                 items.push({
-                    itemName: n.value,
-                    qty: parseFloat(qtys[i].value) || 1,
-                    sale: parseFloat(sales[i].value) || 0,
-                    cost: parseFloat(costs[i].value) || 0
+                    itemName: name,
+                    qty: parseFloat(row.querySelector('.i-qty').value) || 1,
+                    sale: parseFloat(row.querySelector('.i-sales').value) || 0,
+                    cost: parseFloat(row.querySelector('.i-cost').value) || 0
                 });
             }
         });
@@ -280,7 +272,6 @@
 
     function resetSalesModule() {
         if(confirm("Clear all items and price values?")) {
-            document.getElementById('itemCount').value = "0";
             document.getElementById('itemRowsContainer').innerHTML = '';
             document.getElementById('shippingDataRow').style.display = 'none';
             document.getElementById('shipColl').value = '';
@@ -289,6 +280,8 @@
             document.getElementById('grossTotalBox').innerText = '₹ 0';
         }
     }
+
+    // --- REST OF THE CODE REMAINS UNTOUCHED ---
 
     function updateStatus(mode, current = 0, total = 0) {
         const el = document.getElementById('statusText');
@@ -421,18 +414,15 @@
             document.getElementById('pincode').value = record.pin;
             document.getElementById('phone').value = record.ph;
             
+            document.getElementById('itemRowsContainer').innerHTML = '';
             if(record.sales && record.sales.items.length > 0) {
-                document.getElementById('itemCount').value = record.sales.items.length;
-                renderItemRows();
-                const names = document.querySelectorAll('.i-name');
-                const qtys = document.querySelectorAll('.i-qty');
-                const sales = document.querySelectorAll('.i-sales');
-                const costs = document.querySelectorAll('.i-cost');
-                record.sales.items.forEach((it, i) => {
-                    names[i].value = it.itemName;
-                    qtys[i].value = it.qty || 1;
-                    sales[i].value = it.sale;
-                    costs[i].value = it.cost;
+                record.sales.items.forEach(it => {
+                    addNewItemRow({
+                        name: it.itemName,
+                        qty: it.qty || 1,
+                        sale: it.sale,
+                        cost: it.cost
+                    });
                 });
                 document.getElementById('shipColl').value = record.sales.shipColl;
                 document.getElementById('shipPaid').value = record.sales.shipPaid;
@@ -500,16 +490,18 @@
     function updateRecord(idx, field, value) { customers[idx][field] = value; saveToStorage(); renderHistory(); }
     function deleteFromMaster(idx) { if(confirm("Delete from local?")) { customers.splice(idx, 1); saveToStorage(); renderHistory(); } }
     function saveToStorage() { localStorage.setItem('tanima_customers', JSON.stringify(customers)); }
+    
     function clearInputs() { 
-        ['custName', 'house', 'po', 'location', 'district', 'state', 'pincode', 'phone', 'bulkPaste', 'itemCount', 'shipColl', 'shipPaid'].forEach(id => {
+        ['custName', 'house', 'po', 'location', 'district', 'state', 'pincode', 'phone', 'bulkPaste', 'shipColl', 'shipPaid'].forEach(id => {
             const el = document.getElementById(id);
-            if(el) el.value = id === 'itemCount' ? '0' : '';
+            if(el) el.value = '';
         });
         document.getElementById('itemRowsContainer').innerHTML = '';
         document.getElementById('shippingDataRow').style.display = 'none';
         document.getElementById('totalProfitBox').innerText = '₹ 0';
         document.getElementById('grossTotalBox').innerText = '₹ 0';
     }
+    
     function updateCounter() { document.getElementById('label-counter').innerText = `Labels in Queue: ${count} / 8`; }
     function clearAllData() { if(confirm("Wipe local data?")) { localStorage.clear(); customers = []; document.getElementById('print-area').innerHTML = ''; count=0; renderHistory(); updateCounter(); } }
 
