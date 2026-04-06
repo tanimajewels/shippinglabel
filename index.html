@@ -24,12 +24,45 @@
         .item-row { display: grid; gap: 10px; margin-bottom: 10px; align-items: flex-end; position: relative; }
         .item-row label { font-size: 10px; color: #888; }
         .ship-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px; }
-        .btn-reset-sales { background: #e74c3c; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        
+        /* FIXED: Reset Button width issue */
+        .btn-reset-sales { 
+            background: #e74c3c; 
+            color: white; 
+            padding: 4px 12px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 11px; 
+            font-weight: bold; 
+            width: auto; 
+            flex: none; 
+        }
         
         /* New Professional Buttons */
         .btn-add-item { background: #34495e; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; margin-top: 5px; }
         .btn-add-item:hover { background: #2c3e50; }
-        .btn-row-del { background: #e74c3c; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; line-height: 1; margin-bottom: 8px; }
+        
+        /* FIXED: Delete Button Oval issue */
+        .btn-row-del { 
+            background: #e74c3c; 
+            color: white; 
+            border: none; 
+            width: 24px; 
+            height: 24px; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            font-size: 14px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            line-height: 1; 
+            margin-bottom: 8px; 
+            padding: 0; 
+            min-width: 24px; 
+            flex: none;
+        }
+        .btn-row-del:hover { background: #c0392b; }
 
         .btn-group { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
         button { flex: 1; padding: 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; min-width: 120px; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -194,7 +227,8 @@
         const rowCount = container.children.length + 1;
         const div = document.createElement('div');
         div.className = 'item-row';
-        div.style.gridTemplateColumns = '2fr 0.5fr 1fr 1fr 0.8fr 0.3fr';
+        // UPDATED: Changed last column to 40px to prevent "X" stretching
+        div.style.gridTemplateColumns = '2fr 0.5fr 1fr 1fr 0.8fr 40px'; 
         div.innerHTML = `
             <div><label class="item-index-label">Item ${rowCount} Name</label><input type="text" class="i-name" placeholder="Item Name" value="${data.name}"></div>
             <div><label>Qty</label><input type="number" class="i-qty" value="${data.qty}" oninput="calcTotalProfit()"></div>
