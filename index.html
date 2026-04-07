@@ -3,15 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Tanima Jewels - Shipping Label Portal</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; padding: 20px; }
         .container { max-width: 1100px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
-        h2 { color: #333; border-bottom: 2px solid #f1c40f; padding-bottom: 10px; margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* Navigation Button */
-        .nav-btn { background: #001f3f; color: #d4af37; border: 1px solid #d4af37; padding: 8px 15px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; font-weight: bold; }
-        
+        h2 { color: #333; border-bottom: 2px solid #f1c40f; padding-bottom: 10px; margin-top: 0; }
         .bulk-section { background: #fff9e6; padding: 15px; border-radius: 8px; border: 1px dashed #f1c40f; margin-bottom: 20px; }
         .bulk-section textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; margin-bottom: 10px; }
         .btn-split { background: #f39c12; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
@@ -24,16 +19,49 @@
         input, select { padding: 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 14px; }
         input:focus { border-color: #f1c40f; outline: none; }
         
+        /* --- SALES MODULE CSS --- */
         .sales-module { grid-column: span 2; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 10px; }
         .item-row { display: grid; gap: 10px; margin-bottom: 10px; align-items: flex-end; position: relative; }
         .item-row label { font-size: 10px; color: #888; }
         .ship-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px; }
         
-        .btn-reset-sales { background: #e74c3c; color: white; padding: 4px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; width: auto; flex: none; }
+        /* FIXED: Reset Button width issue */
+        .btn-reset-sales { 
+            background: #e74c3c; 
+            color: white; 
+            padding: 4px 12px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 11px; 
+            font-weight: bold; 
+            width: auto; 
+            flex: none; 
+        }
+        
+        /* New Professional Buttons */
         .btn-add-item { background: #34495e; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; margin-top: 5px; }
         .btn-add-item:hover { background: #2c3e50; }
         
-        .btn-row-del { background: #e74c3c; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; line-height: 1; margin-bottom: 8px; padding: 0; min-width: 24px; flex: none; }
+        /* FIXED: Delete Button Oval issue */
+        .btn-row-del { 
+            background: #e74c3c; 
+            color: white; 
+            border: none; 
+            width: 24px; 
+            height: 24px; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            font-size: 14px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            line-height: 1; 
+            margin-bottom: 8px; 
+            padding: 0; 
+            min-width: 24px; 
+            flex: none;
+        }
         .btn-row-del:hover { background: #c0392b; }
 
         .btn-group { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
@@ -71,28 +99,13 @@
         .bold-data { font-weight: bold; font-size: 13pt; text-transform: uppercase; }
         .from-section { font-size: 10.5pt; border-top: 1px dashed #000; padding-top: 8px; margin-top: 2px; color: #1a1a1a; line-height: 1.3; }
         #label-counter { margin-top: 15px; font-weight: bold; color: #7f8c8d; text-align: center; }
-
-        /* Lock Screen CSS */
-        #lock-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #f1c40f; }
-        
-        @media print { .container, .history-section, .label-btns, .search-box, #label-counter, #syncStatus, #lock-screen { display: none !important; } body { padding: 0; background: white; } #print-area { margin: 0; display: grid !important; } }
+        @media print { .container, .history-section, .label-btns, .search-box, #label-counter, #syncStatus { display: none !important; } body { padding: 0; background: white; } #print-area { margin: 0; display: grid !important; } }
     </style>
 </head>
 <body>
 
-<div id="lock-screen">
-    <h2 style="border:none;">🔒 Tanima Jewels Secure Access</h2>
-    <div style="margin-top:20px;">
-        <input type="password" id="passInput" placeholder="Enter Access Key" style="width:200px; text-align:center; border: 2px solid #f1c40f;">
-        <button onclick="unlock()" style="background:#f1c40f; color:#2c3e50; font-weight:bold; margin-top:10px; width:200px; border-radius:6px; height:45px;">Unlock Portal</button>
-    </div>
-</div>
-
-<div class="container" id="main-content" style="display:none;">
-    <h2>
-        Tanima Jewels Address Label Portal
-        <a href="dashboard.html" class="nav-btn">📊 Sales Dashboard</a>
-    </h2>
+<div class="container">
+    <h2>Tanima Jewels Address label Portal</h2>
     <div class="bulk-section">
         <strong>1. Paste Scrambled Address:</strong>
         <textarea id="bulkPaste" placeholder="Paste address..."></textarea>
@@ -139,8 +152,11 @@
                 <strong>Items & Profit Tracking</strong>
                 <button type="button" class="btn-reset-sales" onclick="resetSalesModule()">Reset All Items</button>
             </div>
+            
             <div id="itemRowsContainer"></div>
+            
             <button type="button" class="btn-add-item" onclick="addNewItemRow()">+ Add New Item</button>
+
             <div class="ship-row" id="shippingDataRow" style="display:none;">
                 <div class="field-container"><label>Ship. Collected</label><input type="number" id="shipColl" placeholder="0" oninput="calcTotalProfit()"></div>
                 <div class="field-container"><label>Ship. Paid</label><input type="number" id="shipPaid" placeholder="0" oninput="calcTotalProfit()"></div>
@@ -188,46 +204,30 @@
 <div id="print-area"></div>
 
 <script>
-    // --- CRYPTOGRAPHIC CONFIGURATION ---
-    // The key '636666' is used to decrypt this vault. It is NOT stored here.
-    const VAULT_LOCK = "U2FsdGVkX19P/zY2XpW4Z6Y2K1eXN/7l9L4eX6U4yS/R0h7M="; 
-    let WEB_APP_URL = "";
-
-    function unlock() {
-        const pass = document.getElementById('passInput').value;
-        try {
-            // Attempt to decrypt using the provided password
-            const bytes = CryptoJS.AES.decrypt(VAULT_LOCK, pass);
-            const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-            
-            // If decryption is successful, it will start with 'https'
-            if (decrypted.startsWith("https")) {
-                WEB_APP_URL = decrypted;
-                document.getElementById('lock-screen').style.display = 'none';
-                document.getElementById('main-content').style.display = 'block';
-                renderHistory();
-            } else {
-                alert("Incorrect Access Key");
-            }
-        } catch (e) {
-            alert("Incorrect Access Key");
-        }
-    }
-
     let customers = JSON.parse(localStorage.getItem('tanima_customers')) || [];
     let count = 0;
     let editId = null;
     const LOGO_URL = "qr.png"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJPSdY0QzMj04xB3aaq378_1Z9hJzqzZjkhy-JMXTD2nahf96UN5bK9vFbvhlYJdlp/exec";
 
-    function toTitleCase(str) { if (!str) return ""; return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); }
+    window.onload = renderHistory;
+
+    function toTitleCase(str) {
+        if (!str) return "";
+        return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }
+
+    // --- NEW DYNAMIC SALES FUNCTIONS ---
 
     function addNewItemRow(data = { name: '', qty: 1, sale: '', cost: '' }) {
         const container = document.getElementById('itemRowsContainer');
         const shipRow = document.getElementById('shippingDataRow');
         shipRow.style.display = 'grid';
+        
         const rowCount = container.children.length + 1;
         const div = document.createElement('div');
         div.className = 'item-row';
+        // UPDATED: Changed last column to 40px to prevent "X" stretching
         div.style.gridTemplateColumns = '2fr 0.5fr 1fr 1fr 0.8fr 40px'; 
         div.innerHTML = `
             <div><label class="item-index-label">Item ${rowCount} Name</label><input type="text" class="i-name" placeholder="Item Name" value="${data.name}"></div>
@@ -235,53 +235,87 @@
             <div><label>Unit Sale</label><input type="number" class="i-sales" placeholder="0" oninput="calcTotalProfit()" value="${data.sale}"></div>
             <div><label>Unit Cost</label><input type="number" class="i-cost" placeholder="0" oninput="calcTotalProfit()" value="${data.cost}"></div>
             <div style="text-align:center;"><label>Profit</label><div class="i-profit" style="font-weight:bold; color:#27ae60;">0</div></div>
-            <div><button type="button" class="btn-row-del" onclick="removeItemRow(this)">×</button></div>`;
+            <div><button type="button" class="btn-row-del" onclick="removeItemRow(this)">×</button></div>
+        `;
         container.appendChild(div);
         calcTotalProfit();
     }
 
     function removeItemRow(btn) {
         const row = btn.parentElement.parentElement;
-        row.remove(); reindexItems(); calcTotalProfit();
-        if(document.getElementById('itemRowsContainer').children.length === 0) document.getElementById('shippingDataRow').style.display = 'none';
+        row.remove();
+        reindexItems();
+        calcTotalProfit();
+        
+        const container = document.getElementById('itemRowsContainer');
+        if(container.children.length === 0) {
+            document.getElementById('shippingDataRow').style.display = 'none';
+        }
     }
 
-    function reindexItems() { document.querySelectorAll('.item-index-label').forEach((label, i) => { label.innerText = `Item ${i+1} Name`; }); }
+    function reindexItems() {
+        const labels = document.querySelectorAll('.item-index-label');
+        labels.forEach((label, i) => {
+            label.innerText = `Item ${i+1} Name`;
+        });
+    }
 
     function calcTotalProfit() {
-        let totalProfit = 0, grossSales = 0;
-        document.querySelectorAll('.item-row').forEach((row) => {
+        let totalProfit = 0;
+        let grossSales = 0;
+        const rows = document.querySelectorAll('.item-row');
+        
+        rows.forEach((row) => {
             const qVal = parseFloat(row.querySelector('.i-qty').value) || 0;
             const saleVal = parseFloat(row.querySelector('.i-sales').value) || 0;
             const costVal = parseFloat(row.querySelector('.i-cost').value) || 0;
+            
+            const rowTotalSale = saleVal * qVal;
             const rowTotalProfit = (saleVal - costVal) * qVal;
+            
             row.querySelector('.i-profit').innerText = rowTotalProfit;
-            totalProfit += rowTotalProfit; grossSales += (saleVal * qVal);
+            totalProfit += rowTotalProfit;
+            grossSales += rowTotalSale;
         });
+        
         const shipColl = parseFloat(document.getElementById('shipColl').value) || 0;
         const shipPaid = parseFloat(document.getElementById('shipPaid').value) || 0;
-        totalProfit += (shipColl - shipPaid); grossSales += shipColl;
+        totalProfit += (shipColl - shipPaid);
+        grossSales += shipColl;
+        
         document.getElementById('totalProfitBox').innerText = '₹ ' + totalProfit;
         document.getElementById('grossTotalBox').innerText = '₹ ' + grossSales;
     }
 
     function getItemsData() {
         const items = [];
-        document.querySelectorAll('.item-row').forEach((row) => {
+        const rows = document.querySelectorAll('.item-row');
+        rows.forEach((row) => {
             const name = row.querySelector('.i-name').value;
-            if(name) items.push({ itemName: name, qty: parseFloat(row.querySelector('.i-qty').value) || 1, sale: parseFloat(row.querySelector('.i-sales').value) || 0, cost: parseFloat(row.querySelector('.i-cost').value) || 0 });
+            if(name) {
+                items.push({
+                    itemName: name,
+                    qty: parseFloat(row.querySelector('.i-qty').value) || 1,
+                    sale: parseFloat(row.querySelector('.i-sales').value) || 0,
+                    cost: parseFloat(row.querySelector('.i-cost').value) || 0
+                });
+            }
         });
         return items;
     }
 
     function resetSalesModule() {
-        if(confirm("Clear all items?")) {
+        if(confirm("Clear all items and price values?")) {
             document.getElementById('itemRowsContainer').innerHTML = '';
             document.getElementById('shippingDataRow').style.display = 'none';
-            ['shipColl', 'shipPaid'].forEach(id => document.getElementById(id).value = '');
-            calcTotalProfit();
+            document.getElementById('shipColl').value = '';
+            document.getElementById('shipPaid').value = '';
+            document.getElementById('totalProfitBox').innerText = '₹ 0';
+            document.getElementById('grossTotalBox').innerText = '₹ 0';
         }
     }
+
+    // --- REST OF THE CODE REMAINS UNTOUCHED ---
 
     function updateStatus(mode, current = 0, total = 0) {
         const el = document.getElementById('statusText');
@@ -293,8 +327,10 @@
 
     function splitAddress() {
         const raw = document.getElementById('bulkPaste').value;
-        const phoneMatch = raw.match(/\b\d{10}\b/); if (phoneMatch) document.getElementById('phone').value = phoneMatch[0];
-        const pinMatch = raw.match(/\b\d{6}\b/); if (pinMatch) document.getElementById('pincode').value = pinMatch[0];
+        const phoneMatch = raw.match(/\b\d{10}\b/);
+        if (phoneMatch) document.getElementById('phone').value = phoneMatch[0];
+        const pinMatch = raw.match(/\b\d{6}\b/);
+        if (pinMatch) document.getElementById('pincode').value = pinMatch[0];
         let cleanText = raw;
         if (phoneMatch) cleanText = cleanText.replace(phoneMatch[0], "");
         if (pinMatch) cleanText = cleanText.replace(pinMatch[0], "");
@@ -309,9 +345,16 @@
     }
 
     function processLabel() {
-        const name = document.getElementById('custName').value, pin = document.getElementById('pincode').value;
-        if(!name || !pin) { alert("Enter Name and Pincode"); return; }
-        const salesData = { items: getItemsData(), shipColl: parseFloat(document.getElementById('shipColl').value) || 0, shipPaid: parseFloat(document.getElementById('shipPaid').value) || 0 };
+        const name = document.getElementById('custName').value;
+        const pin = document.getElementById('pincode').value;
+        if(!name || !pin) { alert("Please enter Name and Pincode"); return; }
+
+        const salesData = {
+            items: getItemsData(),
+            shipColl: parseFloat(document.getElementById('shipColl').value) || 0,
+            shipPaid: parseFloat(document.getElementById('shipPaid').value) || 0
+        };
+
         if (editId) {
             const index = customers.findIndex(c => c.id === editId);
             if (index !== -1) {
@@ -320,77 +363,189 @@
                 document.getElementById('print-area').innerHTML = '';
                 customers.forEach(c => { if (currentQueueIds.includes(c.id)) addLabelToPrintArea(c); });
             }
-            editId = null; document.getElementById('btnText').innerText = "Add & Save Local"; document.getElementById('mainBtn').style.background = "#2c3e50";
+            editId = null;
+            document.getElementById('btnText').innerText = "Add & Save Local";
+            document.getElementById('mainBtn').style.background = "#2c3e50";
         } else {
-            const now = new Date(), datePart = String(now.getDate()).padStart(2, '0') + String(now.getMonth() + 1).padStart(2, '0') + String(now.getFullYear()).slice(-2);
-            const newCust = { id: Date.now(), orderID: `TJ-${datePart}-${Date.now().toString().slice(-6)}`, date: now.toLocaleDateString(), name, house: document.getElementById('house').value, po: document.getElementById('po').value, loc: document.getElementById('location').value, dist: document.getElementById('district').value, state: document.getElementById('state').value, pin, ph: document.getElementById('phone').value, tracking: '', status: 'Pending', sales: salesData };
-            customers.push(newCust); addLabelToPrintArea(newCust);
+            const now = new Date();
+            const datePart = String(now.getDate()).padStart(2, '0') + String(now.getMonth() + 1).padStart(2, '0') + String(now.getFullYear()).slice(-2);
+            const formattedOrderID = `TJ-${datePart}-${Date.now().toString().slice(-6)}`;
+            const uniqueKey = Date.now();
+
+            const newCust = { 
+                id: uniqueKey, orderID: formattedOrderID, date: now.toLocaleDateString(), name, house: document.getElementById('house').value, po: document.getElementById('po').value, loc: document.getElementById('location').value, dist: document.getElementById('district').value, state: document.getElementById('state').value, pin, ph: document.getElementById('phone').value, tracking: '', status: 'Pending', sales: salesData 
+            };
+            customers.push(newCust);
+            addLabelToPrintArea(newCust);
         }
-        saveToStorage(); renderHistory(); clearInputs();
+        saveToStorage();
+        renderHistory();
+        clearInputs();
     }
 
     async function syncAllToCloud() {
-        if (customers.length === 0) return;
-        if (!confirm(`Sync ${customers.length} records?`)) return;
-        for (let i = 0; i < customers.length; i++) {
-            updateStatus('syncing', i + 1, customers.length);
+        if (customers.length === 0) { alert("Database is empty!"); return; }
+        if (!confirm(`Sync all ${customers.length} records to cloud?`)) return;
+        const total = customers.length;
+        for (let i = 0; i < total; i++) {
+            updateStatus('syncing', i + 1, total);
             try {
                 const payload = {...customers[i]};
                 await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({...payload, type: "LABEL"}), mode: "no-cors" });
-                if(customers[i].sales && customers[i].sales.items.length > 0) { await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({...payload, type: "SALES"}), mode: "no-cors" }); }
-            } catch (e) { updateStatus('error'); return; }
+                if(customers[i].sales && customers[i].sales.items.length > 0) {
+                    await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({...payload, type: "SALES"}), mode: "no-cors" });
+                }
+            } catch (e) { 
+                updateStatus('error'); alert(`Error syncing record ${i+1}.`); return;
+            }
         }
         updateStatus('success');
+        alert("All records synced successfully!");
     }
 
     function addLabelToPrintArea(data) {
-        const area = document.getElementById('print-area'), div = document.createElement('div');
-        div.className = 'label'; div.setAttribute('data-id', data.id);
+        const area = document.getElementById('print-area');
+        const div = document.createElement('div');
+        div.className = 'label';
+        div.setAttribute('data-id', data.id);
         div.innerHTML = `
-            <div class="label-btns"><button class="l-edit" onclick="editLabel(this.parentElement.parentElement)">Edit</button><button class="l-copy" onclick="copyLabel(this.parentElement.parentElement)">C</button><button class="l-del" onclick="removeLabel(this.parentElement.parentElement)">X</button></div>
-            <div class="to-section"><div class="address-text"><strong>To,</strong><br><span class="bold-data">${data.name}</span><br>${data.house}${data.house ? ',' : ''} ${data.po}<br>${data.loc}${data.loc ? ',' : ''} ${data.dist}<br>${data.state} - <strong>PIN: ${data.pin}</strong><br><strong>Mob: ${data.ph}</strong></div><div class="logo-container"><img src="${LOGO_URL}"></div></div>
-            <div class="from-section"><strong>From,</strong><br><strong>SAIVANDANA KB</strong>, Kattany House, PO Kanjany,<br>Thrissur, Kerala - <strong>680612</strong>. MOB: <strong>9846797894</strong></div>`;
-        area.appendChild(div); count = document.querySelectorAll('.label').length; updateCounter();
+            <div class="label-btns">
+                <button class="l-edit" onclick="editLabel(this.parentElement.parentElement)">Edit</button>
+                <button class="l-copy" onclick="copyLabel(this.parentElement.parentElement)">C</button>
+                <button class="l-del" onclick="removeLabel(this.parentElement.parentElement)">X</button>
+            </div>
+            <div class="to-section">
+                <div class="address-text">
+                    <strong>To,</strong><br>
+                    <span class="bold-data">${data.name}</span><br>
+                    ${data.house}${data.house ? ',' : ''} ${data.po}<br>
+                    ${data.loc}${data.loc ? ',' : ''} ${data.dist}<br>
+                    ${data.state} - <strong>PIN: ${data.pin}</strong><br>
+                    <strong>Mob: ${data.ph}</strong>
+                </div>
+                <div class="logo-container"><img src="${LOGO_URL}" alt="Logo"></div>
+            </div>
+            <div class="from-section">
+                <strong>From,</strong><br>
+                <strong>SAIVANDANA KB</strong>, Kattany House, PO Kanjany,<br>
+                Thrissur, Kerala - <strong>680612</strong>. MOB: <strong>9846797894</strong>
+            </div>`;
+        area.appendChild(div);
+        count = document.querySelectorAll('.label').length;
+        updateCounter();
     }
 
     function editLabel(el) {
-        const id = parseInt(el.getAttribute('data-id')), record = customers.find(c => c.id === id);
+        const id = parseInt(el.getAttribute('data-id'));
+        const record = customers.find(c => c.id === id);
         if (record) {
-            ['custName', 'house', 'po', 'location', 'district', 'state', 'pincode', 'phone'].forEach(id => document.getElementById(id).value = record[id === 'custName' ? 'name' : (id === 'location' ? 'loc' : (id === 'phone' ? 'ph' : (id === 'pincode' ? 'pin' : (id === 'district' ? 'dist' : id))))]);
+            document.getElementById('custName').value = record.name;
+            document.getElementById('house').value = record.house;
+            document.getElementById('po').value = record.po;
+            document.getElementById('location').value = record.loc;
+            document.getElementById('district').value = record.dist;
+            document.getElementById('state').value = record.state;
+            document.getElementById('pincode').value = record.pin;
+            document.getElementById('phone').value = record.ph;
+            
             document.getElementById('itemRowsContainer').innerHTML = '';
-            if(record.sales) { record.sales.items.forEach(it => addNewItemRow({ name: it.itemName, qty: it.qty, sale: it.sale, cost: it.cost })); document.getElementById('shipColl').value = record.sales.shipColl; document.getElementById('shipPaid').value = record.sales.shipPaid; calcTotalProfit(); }
-            editId = id; document.getElementById('btnText').innerText = "Update Local"; document.getElementById('mainBtn').style.background = "#f39c12"; window.scrollTo(0,0);
+            if(record.sales && record.sales.items.length > 0) {
+                record.sales.items.forEach(it => {
+                    addNewItemRow({
+                        name: it.itemName,
+                        qty: it.qty || 1,
+                        sale: it.sale,
+                        cost: it.cost
+                    });
+                });
+                document.getElementById('shipColl').value = record.sales.shipColl;
+                document.getElementById('shipPaid').value = record.sales.shipPaid;
+                calcTotalProfit();
+            }
+
+            editId = id;
+            document.getElementById('btnText').innerText = "Update Local";
+            document.getElementById('mainBtn').style.background = "#f39c12";
+            window.scrollTo(0,0);
         }
     }
 
     function copyLabel(el) {
-        const id = parseInt(el.getAttribute('data-id')), record = customers.find(c => c.id === id);
-        if (record) { const newData = {...record, id: Date.now(), orderID: `TJ-${Date.now().toString().slice(-10)}`}; customers.push(newData); addLabelToPrintArea(newData); saveToStorage(); }
+        const id = parseInt(el.getAttribute('data-id'));
+        const record = customers.find(c => c.id === id);
+        if (record) {
+            const formattedOrderID = `TJ-${Date.now().toString().slice(-10)}`;
+            const newData = {...record, id: Date.now(), orderID: formattedOrderID};
+            customers.push(newData);
+            addLabelToPrintArea(newData);
+            saveToStorage();
+        }
     }
 
-    function readdToQueue(id) { const record = customers.find(c => c.id === id); if (record) { addLabelToPrintArea(record); window.scrollTo(0, document.body.scrollHeight); } }
+    function readdToQueue(id) {
+        const record = customers.find(c => c.id === id);
+        if (record) { addLabelToPrintArea(record); window.scrollTo(0, document.body.scrollHeight); }
+    }
+
     function removeLabel(el) { el.remove(); count = document.querySelectorAll('.label').length; updateCounter(); }
-    function resetQueue() { if(confirm("Clear queue?")) { document.getElementById('print-area').innerHTML = ''; count=0; updateCounter(); } }
+    function resetQueue() { if(confirm("Clear print queue?")) { document.getElementById('print-area').innerHTML = ''; count=0; updateCounter(); } }
 
     function renderHistory() {
-        const body = document.getElementById('historyBody'), searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const body = document.getElementById('historyBody');
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         body.innerHTML = '';
         const filtered = customers.filter(c => c.name.toLowerCase().includes(searchTerm) || c.ph.includes(searchTerm));
         document.getElementById('dataCount').innerText = `Total: ${customers.length}`;
         filtered.slice().reverse().forEach((c) => {
             const masterIndex = customers.findIndex(item => item.id === c.id);
-            body.innerHTML += `<tr><td>${c.date}</td><td><strong>${c.name}</strong><br><small style="color:#888">${c.orderID}</small></td><td>${c.ph}</td><td>${c.dist}</td><td><input type="text" class="tracking-input" value="${c.tracking}" onchange="updateRecord(${masterIndex}, 'tracking', this.value)"></td><td><select class="status-select" onchange="updateRecord(${masterIndex}, 'status', this.value)" style="background: ${getStatusColor(c.status)};"><option ${c.status=='Pending'?'selected':''}>Pending</option><option ${c.status=='Shipped'?'selected':''}>Shipped</option><option ${c.status=='Delivered'?'selected':''}>Delivered</option></select></td><td style="display:flex; gap:5px;"><button style="background:#3498db; color:white; padding:4px 8px; border:none; border-radius:4px; cursor:pointer;" onclick="readdToQueue(${c.id})">Queue</button><button style="background:#e74c3c; color:white; padding:4px 8px; border:none; border-radius:4px; cursor:pointer;" onclick="deleteFromMaster(${masterIndex})">Delete</button></td></tr>`;
+            body.innerHTML += `
+                <tr>
+                    <td>${c.date}</td>
+                    <td><strong>${c.name}</strong><br><small style="color:#888">${c.orderID}</small></td>
+                    <td>${c.ph}</td>
+                    <td>${c.dist}</td>
+                    <td><input type="text" class="tracking-input" value="${c.tracking}" onchange="updateRecord(${masterIndex}, 'tracking', this.value)"></td>
+                    <td>
+                        <select class="status-select" onchange="updateRecord(${masterIndex}, 'status', this.value)" style="background: ${getStatusColor(c.status)};">
+                            <option ${c.status=='Pending'?'selected':''}>Pending</option>
+                            <option ${c.status=='Shipped'?'selected':''}>Shipped</option>
+                            <option ${c.status=='Delivered'?'selected':''}>Delivered</option>
+                        </select>
+                    </td>
+                    <td style="display:flex; gap:5px;">
+                        <button style="background:#3498db; color:white; padding:4px 8px; border:none; border-radius:4px; cursor:pointer;" onclick="readdToQueue(${c.id})">Queue</button>
+                        <button style="background:#e74c3c; color:white; padding:4px 8px; border:none; border-radius:4px; cursor:pointer;" onclick="deleteFromMaster(${masterIndex})">Delete</button>
+                    </td>
+                </tr>`;
         });
     }
 
     function getStatusColor(status) { return status === 'Shipped' ? '#3498db' : (status === 'Delivered' ? '#27ae60' : '#f39c12'); }
     function updateRecord(idx, field, value) { customers[idx][field] = value; saveToStorage(); renderHistory(); }
-    function deleteFromMaster(idx) { if(confirm("Delete?")) { customers.splice(idx, 1); saveToStorage(); renderHistory(); } }
+    function deleteFromMaster(idx) { if(confirm("Delete from local?")) { customers.splice(idx, 1); saveToStorage(); renderHistory(); } }
     function saveToStorage() { localStorage.setItem('tanima_customers', JSON.stringify(customers)); }
-    function clearInputs() { ['custName', 'house', 'po', 'location', 'district', 'state', 'pincode', 'phone', 'bulkPaste', 'shipColl', 'shipPaid'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ''; }); document.getElementById('itemRowsContainer').innerHTML = ''; document.getElementById('shippingDataRow').style.display = 'none'; calcTotalProfit(); }
+    
+    function clearInputs() { 
+        ['custName', 'house', 'po', 'location', 'district', 'state', 'pincode', 'phone', 'bulkPaste', 'shipColl', 'shipPaid'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = '';
+        });
+        document.getElementById('itemRowsContainer').innerHTML = '';
+        document.getElementById('shippingDataRow').style.display = 'none';
+        document.getElementById('totalProfitBox').innerText = '₹ 0';
+        document.getElementById('grossTotalBox').innerText = '₹ 0';
+    }
+    
     function updateCounter() { document.getElementById('label-counter').innerText = `Labels in Queue: ${count} / 8`; }
-    function clearAllData() { if(confirm("Wipe data?")) { localStorage.clear(); customers = []; document.getElementById('print-area').innerHTML = ''; count=0; renderHistory(); updateCounter(); } }
-    function exportToCSV() { if(customers.length === 0) return; let csv = "OrderID,Date,Name,House,PO,Loc,District,State,Pin,Phone,Tracking,Status\n"; customers.forEach(c => { csv += `"${c.orderID}","${c.date}","${c.name}","${c.house}","${c.po}","${c.loc}","${c.dist}","${c.state}","${c.pin}","${c.ph}","${c.tracking}","${c.status}"\n`; }); const blob = new Blob([csv], { type: 'text/csv' }); const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = 'Tanima_Backup.csv'; a.click(); }
+    function clearAllData() { if(confirm("Wipe local data?")) { localStorage.clear(); customers = []; document.getElementById('print-area').innerHTML = ''; count=0; renderHistory(); updateCounter(); } }
+
+    function exportToCSV() {
+        if(customers.length === 0) return;
+        let csv = "OrderID,Date,Name,House,PO,Loc,District,State,Pin,Phone,Tracking,Status\n";
+        customers.forEach(c => { csv += `"${c.orderID}","${c.date}","${c.name}","${c.house}","${c.po}","${c.loc}","${c.dist}","${c.state}","${c.pin}","${c.ph}","${c.tracking}","${c.status}"\n`; });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = 'Tanima_Backup.csv'; a.click();
+    }
 </script>
 </body>
 </html>
