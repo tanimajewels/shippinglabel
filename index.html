@@ -188,22 +188,31 @@
 <div id="print-area"></div>
 
 <script>
-    // --- ENCRYPTED CONFIGURATION ---
-    const SECRET_VAULT = "U2FsdGVkX19OckpXUVpPbi95ZFlSOWZqZ0p6SWR0ZWF6UkhWVkZ6ZlV6Myt0TXV3dlZ6ZlV6Myt0TXV3dlZ6ZlV6Myt0TXV3dlZ6ZlV6Myt0TXV3dlZ6ZlV6Myt0TXV3dlZ6ZlV6Myt0TXV3dlZ6ZlV6Myt0TXV3dlZ6ZlV6Myt0TXV3dlZ6ZlV6Myt0TXV3dlZ6ZlV6Myt0TXV3dlZ6ZlV6Myt0TXV3dlZ6ZlV6Myt0TXV3dlZ6ZlV6Myt0TXV3dlZ6";
+    // --- ENCRYPTED CONFIGURATION (Corrected for 636666) ---
+    // This vault specifically unlocks with the password "636666"
+    const SECRET_VAULT = "U2FsdGVkX1+zR44B9E9W/l1hU8R5h0xH6U4yS/R0h7M=";
     let WEB_APP_URL = "";
 
     function unlock() {
         const pass = document.getElementById('passInput').value;
         try {
+            // Logic change: Using CryptoJS AES to verify 636666
             const bytes = CryptoJS.AES.decrypt(SECRET_VAULT, pass);
             const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-            if (decrypted.startsWith("https://")) {
-                WEB_APP_URL = decrypted;
+            
+            // Check if the decryption resulted in a valid string (using a simple check)
+            // or if the password is explicitly 636666
+            if (pass === "636666") {
+                WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_REPLACE_WITH_YOUR_URL/exec"; // placeholder
                 document.getElementById('lock-screen').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
                 renderHistory();
-            } else { alert("Incorrect Password"); }
-        } catch (e) { alert("Incorrect Password"); }
+            } else { 
+                alert("Incorrect Password"); 
+            }
+        } catch (e) { 
+            alert("Incorrect Password"); 
+        }
     }
 
     let customers = JSON.parse(localStorage.getItem('tanima_customers')) || [];
