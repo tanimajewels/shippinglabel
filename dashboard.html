@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tanima Jewels | Master Intelligence</title>
     <style>
-        :root { --navy: #001f3f; --gold: #d4af37; --white: #ffffff; --bg: #f4f7f9; --green: #27ae60; --blue: #3498db; }
+        :root { --navy: #001f3f; --gold: #d4af37; --white: #ffffff; --bg: #f4f7f9; --green: #27ae60; --blue: #3498db; --red: #e74c3c; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
         .container { max-width: 1400px; margin: auto; }
         header { background: var(--navy); color: var(--gold); padding: 40px; border-radius: 15px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         header h1 { margin: 0; font-size: 2.2rem; }
         header p { color: var(--gold); opacity: 0.8; margin-top: 10px; }
         
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: var(--white); padding: 25px; border-radius: 12px; text-align: center; border-bottom: 4px solid var(--gold); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .stat-card h3 { margin: 0; font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
         .stat-card .val { font-size: 1.8rem; font-weight: bold; margin: 10px 0; color: var(--navy); }
@@ -32,7 +32,7 @@
         td { padding: 15px; border-bottom: 1px solid #f2f4f6; font-size: 0.9rem; }
         tr:hover { background: #fffcf0; }
         
-        .neg { color: #e74c3c; }
+        .neg { color: var(--red); }
         .pos { color: var(--green); }
         #loader { text-align: center; padding: 80px; font-weight: bold; color: var(--navy); font-size: 1.2rem; }
     </style>
@@ -48,6 +48,7 @@
     <div class="stats-grid">
         <div class="stat-card"><h3>Orders</h3><div id="kpiCount" class="val">0</div></div>
         <div class="stat-card"><h3>Gross Sales</h3><div class="val">₹<span id="kpiRev">0</span></div></div>
+        <div class="stat-card"><h3>Total Cost</h3><div class="val" style="color:var(--red)">₹<span id="kpiTotalCost">0</span></div></div>
         <div class="stat-card"><h3>Prod Profit</h3><div class="val" style="color:var(--green)">₹<span id="kpiProdProf">0</span></div></div>
         <div class="stat-card"><h3>Ship Profit</h3><div class="val" style="color:var(--blue)">₹<span id="kpiShipProf">0</span></div></div>
         <div class="stat-card"><h3>Prod Margin</h3><div class="val"><span id="kpiMargin">0</span>%</div></div>
@@ -78,6 +79,7 @@
                     <th onclick="sortTable('customer')">Customer</th>
                     <th onclick="sortTable('itemname')">Item</th>
                     <th onclick="sortTable('rowSale')">Sale Price</th>
+                    <th onclick="sortTable('rowCost')">Unit Cost</th>
                     <th onclick="sortTable('rowProf')">Prod Profit</th>
                     <th onclick="sortTable('shipprofit')">Ship Profit</th>
                     <th onclick="sortTable('margin')">Margin %</th>
@@ -108,12 +110,15 @@
                 const shipProf = parseFloat(item.shippingprofit) || parseFloat(item.shipprofit) || 0;
                 
                 const totalSale = unitSale * qty;
+                const totalCost = unitCost * qty;
                 const totalProf = (unitSale - unitCost) * qty;
                 
                 return {
                     ...item,
                     jsDate: new Date(item.date),
                     rowSale: totalSale,
+                    rowCost: unitCost,
+                    rowTotalCost: totalCost,
                     rowProf: totalProf,
                     shipprofit: shipProf,
                     margin: totalSale > 0 ? ((totalProf / totalSale) * 100).toFixed(1) : 0
@@ -132,12 +137,13 @@
         const body = document.getElementById('tableBody');
         body.innerHTML = "";
 
-        let tRev = 0, tProdProf = 0, tShipProf = 0;
+        let tRev = 0, tProdProf = 0, tShipProf = 0, tCost = 0;
         const uniqueOrders = new Set();
 
         data.forEach(row => {
             tRev += row.rowSale;
             tProdProf += row.rowProf;
+            tCost += row.rowTotalCost;
             
             const sProf = parseFloat(row.shipprofit) || 0;
             tShipProf += sProf;
@@ -151,6 +157,7 @@
                     <td>${row.customer || '-'}</td>
                     <td>${row.itemname}</td>
                     <td>₹${Math.round(row.rowSale).toLocaleString()}</td>
+                    <td style="color:#666">₹${Math.round(row.rowCost).toLocaleString()}</td>
                     <td class="pos">₹${Math.round(row.rowProf).toLocaleString()}</td>
                     <td style="color:var(--blue)">₹${sProf.toLocaleString()}</td>
                     <td class="pos" style="font-weight:bold;">${row.margin}%</td>
@@ -159,6 +166,7 @@
 
         document.getElementById('kpiCount').innerText = uniqueOrders.size;
         document.getElementById('kpiRev').innerText = Math.round(tRev).toLocaleString();
+        document.getElementById('kpiTotalCost').innerText = Math.round(tCost).toLocaleString();
         document.getElementById('kpiProdProf').innerText = Math.round(tProdProf).toLocaleString();
         document.getElementById('kpiShipProf').innerText = Math.round(tShipProf).toLocaleString();
         document.getElementById('kpiMargin').innerText = tRev > 0 ? ((tProdProf / tRev) * 100).toFixed(1) : 0;
@@ -180,10 +188,10 @@
         if(!from || !to) return;
         
         const dFrom = new Date(from);
-        dFrom.setHours(0, 0, 0, 0); // Start of day 1
+        dFrom.setHours(0, 0, 0, 0); 
         
         const dTo = new Date(to);
-        dTo.setHours(23, 59, 59, 999); // End of day 2
+        dTo.setHours(23, 59, 59, 999); 
 
         filteredData = rawData.filter(d => {
             const itemDate = new Date(d.jsDate);
