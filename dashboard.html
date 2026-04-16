@@ -78,8 +78,9 @@
                     <th onclick="sortTable('orderid')">Order ID</th>
                     <th onclick="sortTable('customer')">Customer</th>
                     <th onclick="sortTable('itemname')">Item</th>
-                    <th onclick="sortTable('rowSale')">Sale Price</th>
-                    <th onclick="sortTable('rowCost')">Unit Cost</th>
+                    <th onclick="sortTable('quantity')">Qty</th>
+                    <th onclick="sortTable('rowSale')">Total Sale</th>
+                    <th onclick="sortTable('rowTotalCost')">Total Cost</th>
                     <th onclick="sortTable('rowProf')">Prod Profit</th>
                     <th onclick="sortTable('shipprofit')">Ship Profit</th>
                     <th onclick="sortTable('margin')">Margin %</th>
@@ -105,21 +106,27 @@
             
             rawData = data.map(item => {
                 const qty = parseFloat(item.quantity) || 1;
-                const unitSale = parseFloat(item.salesprice) || parseFloat(item.saleprice) || 0;
-                const unitCost = parseFloat(item.costprice) || 0;
-                const shipProf = parseFloat(item.shippingprofit) || parseFloat(item.shipprofit) || 0;
                 
-                const totalSale = unitSale * qty;
-                const totalCost = unitCost * qty;
-                const totalProf = (unitSale - unitCost) * qty;
+                // 1. Total Sale Price exactly as it is in your sheet (e.g., 370)
+                const totalSale = parseFloat(item.salesprice) || parseFloat(item.saleprice) || 0;
+                
+                // 2. Unit Cost (e.g., 69) multiplied by Qty (2) = 138
+                const unitCost = parseFloat(item.costprice) || 0;
+                const totalCost = unitCost; 
+                
+                // 3. Profit Logic: Use sheet profit column or calculate (Sale - Total Cost)
+                const totalProf = parseFloat(item.totalprofit) || (totalSale - totalCost);
+                
+                const shipProf = parseFloat(item.shippingprofit) || parseFloat(item.shipprofit) || 0;
                 
                 return {
                     ...item,
+                    quantity: qty,
                     jsDate: new Date(item.date),
-                    rowSale: totalSale,
-                    rowCost: unitCost,
-                    rowTotalCost: totalCost,
-                    rowProf: totalProf,
+                    rowSale: totalSale,       
+                    rowCost: unitCost,        
+                    rowTotalCost: totalCost,  
+                    rowProf: totalProf,       
                     shipprofit: shipProf,
                     margin: totalSale > 0 ? ((totalProf / totalSale) * 100).toFixed(1) : 0
                 };
@@ -156,8 +163,9 @@
                     <td><strong>${row.orderid}</strong></td>
                     <td>${row.customer || '-'}</td>
                     <td>${row.itemname}</td>
+                    <td>${row.quantity}</td>
                     <td>₹${Math.round(row.rowSale).toLocaleString()}</td>
-                    <td style="color:#666">₹${Math.round(row.rowCost).toLocaleString()}</td>
+                    <td style="color:#666">₹${Math.round(row.rowTotalCost).toLocaleString()}</td>
                     <td class="pos">₹${Math.round(row.rowProf).toLocaleString()}</td>
                     <td style="color:var(--blue)">₹${sProf.toLocaleString()}</td>
                     <td class="pos" style="font-weight:bold;">${row.margin}%</td>
@@ -186,13 +194,8 @@
         const from = document.getElementById('dateFrom').value;
         const to = document.getElementById('dateTo').value;
         if(!from || !to) return;
-        
-        const dFrom = new Date(from);
-        dFrom.setHours(0, 0, 0, 0); 
-        
-        const dTo = new Date(to);
-        dTo.setHours(23, 59, 59, 999); 
-
+        const dFrom = new Date(from); dFrom.setHours(0, 0, 0, 0);
+        const dTo = new Date(to); dTo.setHours(23, 59, 59, 999);
         filteredData = rawData.filter(d => {
             const itemDate = new Date(d.jsDate);
             return itemDate >= dFrom && itemDate <= dTo;
@@ -216,7 +219,6 @@
     function sortTable(key) {
         if (currentSort.key === key) currentSort.asc = !currentSort.asc;
         else { currentSort.key = key; currentSort.asc = true; }
-        
         filteredData.sort((a, b) => {
             let vA = a[key], vB = b[key];
             if (vA < vB) return currentSort.asc ? -1 : 1;
