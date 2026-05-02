@@ -384,7 +384,20 @@
             const uniqueKey = Date.now();
 
             const newCust = { 
-                id: uniqueKey, orderID: formattedOrderID, date: now.toLocaleDateString(), name, house: document.getElementById('house').value, po: document.getElementById('po').value, loc: document.getElementById('location').value, dist: document.getElementById('district').value, state: document.getElementById('state').value, pin, ph: document.getElementById('phone').value, tracking: '', status: 'Pending', sales: salesData 
+                id: uniqueKey, 
+                orderID: formattedOrderID, 
+                date: now.toISOString().split('T')[0], // Standard ISO format: YYYY-MM-DD
+                name, 
+                house: document.getElementById('house').value, 
+                po: document.getElementById('po').value, 
+                loc: document.getElementById('location').value, 
+                dist: document.getElementById('district').value, 
+                state: document.getElementById('state').value, 
+                pin, 
+                ph: document.getElementById('phone').value, 
+                tracking: '', 
+                status: 'Pending', 
+                sales: salesData 
             };
             customers.push(newCust);
             addLabelToPrintArea(newCust);
