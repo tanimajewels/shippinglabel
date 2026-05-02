@@ -98,19 +98,18 @@
         .from-section { font-size: 10.5pt; border-top: 1px dashed #000; padding-top: 8px; margin-top: 2px; color: #1a1a1a; line-height: 1.3; }
         #label-counter { margin-top: 15px; font-weight: bold; color: #7f8c8d; text-align: center; }
 
-        /* --- ADDED: RESPONSIVE MEDIA QUERIES --- */
         @media screen and (max-width: 600px) {
             body { padding: 10px; }
             .container { padding: 15px; }
-            .form-group { grid-template-columns: 1fr; } /* Stack inputs vertically */
+            .form-group { grid-template-columns: 1fr; }
             .full-width { grid-column: span 1; }
             .sales-module { grid-column: span 1; }
             .item-row { grid-template-columns: 1fr !important; gap: 5px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
             .ship-row { grid-template-columns: 1fr; }
-            .btn-group button { flex: 1 1 100%; } /* Stack main buttons */
-            .history-section { overflow-x: auto; } /* Let table scroll horizontally if needed */
+            .btn-group button { flex: 1 1 100%; }
+            .history-section { overflow-x: auto; }
             table { font-size: 10px; min-width: 600px; }
-            #print-area { grid-template-columns: 1fr; width: 100%; } /* Preview one label at a time */
+            #print-area { grid-template-columns: 1fr; width: 100%; }
         }
 
         @media print { .container, .history-section, .label-btns, .search-box, #label-counter, #syncStatus { display: none !important; } body { padding: 0; background: white; } #print-area { margin: 0; display: grid !important; grid-template-columns: 1fr 1fr !important; width: 210mm !important; } }
@@ -382,11 +381,17 @@
             const datePart = String(now.getDate()).padStart(2, '0') + String(now.getMonth() + 1).padStart(2, '0') + String(now.getFullYear()).slice(-2);
             const formattedOrderID = `TJ-${datePart}-${Date.now().toString().slice(-6)}`;
             const uniqueKey = Date.now();
+            
+            // FIX: Force DD/MM/YYYY format for Google Sheets consistency
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const formattedDate = `${day}/${month}/${year}`;
 
             const newCust = { 
                 id: uniqueKey, 
                 orderID: formattedOrderID, 
-                date: now.toISOString().split('T')[0], // Standard ISO format: YYYY-MM-DD
+                date: formattedDate,
                 name, 
                 house: document.getElementById('house').value, 
                 po: document.getElementById('po').value, 
