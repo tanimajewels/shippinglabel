@@ -33,8 +33,6 @@
         td { padding: 15px; border-bottom: 1px solid #f2f4f6; font-size: 0.9rem; }
         tr:hover { background: #fffcf0; }
         
-        .neg { color: var(--red); }
-        .pos { color: var(--green); }
         #loader { text-align: center; padding: 80px; font-weight: bold; color: var(--navy); font-size: 1.2rem; }
 
         /* Print Specific Styling */
@@ -42,14 +40,13 @@
             body { background: white; padding: 0; }
             .toolbar, .stats-grid, header, .btn-sync, .btn-print, th::after { display: none !important; }
             .container { max-width: 100%; margin: 0; }
-            .table-wrap { box-shadow: none; border: 1px solid #eee; }
+            .table-wrap { box-shadow: none; border: none; }
             table { min-width: 100%; border: 1px solid #000; }
-            th, td { border: 1px solid #ddd; color: black !important; padding: 10px; font-size: 10pt; }
-            .print-only { display: block !important; margin-bottom: 20px; }
-            /* Hide non-essential columns for packing */
+            th, td { border: 1px solid #000; color: black !important; padding: 8px; font-size: 10pt; }
+            .print-only { display: block !important; margin-bottom: 10px; }
             .no-print { display: none !important; }
         }
-        .print-only { display: none; text-align: center; }
+        .print-only { display: none; text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -57,7 +54,7 @@
 <div class="container">
     <div class="print-only">
         <h2 style="margin:0;">💎 Tanima Jewels - Packing Checklist</h2>
-        <p id="printDateRange"></p>
+        <p id="printDateHeader" style="font-weight:bold; margin:5px 0; font-size:1.1rem;"></p>
     </div>
 
     <header>
@@ -95,7 +92,7 @@
         <table id="mainTable" style="display:none;">
             <thead>
                 <tr>
-                    <th onclick="sortTable('jsDate')">Date</th>
+                    <th class="no-print" onclick="sortTable('jsDate')">Date</th>
                     <th onclick="sortTable('orderid')">Order ID</th>
                     <th onclick="sortTable('customer')">Customer</th>
                     <th onclick="sortTable('itemname')">Item</th>
@@ -130,17 +127,15 @@
                 const qty = parseFloat(item.quantity) || 1;
                 const totalSale = parseFloat(item.salesprice) || parseFloat(item.saleprice) || 0;
                 const unitCost = parseFloat(item.costprice) || 0;
-                const totalCost = unitCost; 
-                const totalProf = parseFloat(item.totalprofit) || (totalSale - totalCost);
-                const shipProf = parseFloat(item.shippingprofit) || parseFloat(item.shipprofit) || 0;
+                const totalProf = parseFloat(item.totalprofit) || (totalSale - unitCost);
+                const shipProf = parseFloat(item.shippingprofit) || 0;
                 
                 return {
                     ...item,
                     quantity: qty,
                     jsDate: new Date(item.date),
                     rowSale: totalSale,       
-                    rowCost: unitCost,        
-                    rowTotalCost: totalCost,  
+                    rowTotalCost: unitCost,  
                     rowProf: totalProf,       
                     shipprofit: shipProf,
                     margin: totalSale > 0 ? ((totalProf / totalSale) * 100).toFixed(1) : 0
@@ -149,7 +144,7 @@
             filteredData = [...rawData];
             renderData(filteredData);
         } catch (e) {
-            document.getElementById('loader').innerText = "⚠️ Error Syncing Sheets. Check Connection.";
+            document.getElementById('loader').innerText = "⚠️ Error Syncing Sheets.";
         }
     }
 
@@ -166,23 +161,21 @@
             tRev += row.rowSale;
             tProdProf += row.rowProf;
             tCost += row.rowTotalCost;
-            const sProf = parseFloat(row.shipprofit) || 0;
-            tShipProf += sProf;
             if(row.orderid) uniqueOrders.add(row.orderid);
 
             body.innerHTML += `
                 <tr>
-                    <td>${row.jsDate.toLocaleDateString('en-GB')}</td>
+                    <td class="no-print">${row.jsDate.toLocaleDateString('en-GB')}</td>
                     <td><strong>${row.orderid}</strong></td>
                     <td>${row.customer || '-'}</td>
                     <td>${row.itemname}</td>
                     <td>${row.quantity}</td>
                     <td class="no-print">₹${Math.round(row.rowSale).toLocaleString()}</td>
-                    <td class="no-print" style="color:#666">₹${Math.round(row.rowTotalCost).toLocaleString()}</td>
-                    <td class="no-print" class="pos">₹${Math.round(row.rowProf).toLocaleString()}</td>
-                    <td class="no-print" style="color:var(--blue)">₹${sProf.toLocaleString()}</td>
-                    <td class="no-print" class="pos" style="font-weight:bold;">${row.margin}%</td>
-                    <td class="print-visible" style="display:none; text-align:center;">[ &nbsp;&nbsp; ]</td>
+                    <td class="no-print">₹${Math.round(row.rowTotalCost).toLocaleString()}</td>
+                    <td class="no-print">₹${Math.round(row.rowProf).toLocaleString()}</td>
+                    <td class="no-print">₹${row.shipprofit.toLocaleString()}</td>
+                    <td class="no-print">${row.margin}%</td>
+                    <td class="print-visible" style="display:none; text-align:center; font-weight:bold;">[ &nbsp;&nbsp; ]</td>
                 </tr>`;
         });
 
@@ -195,18 +188,28 @@
     }
 
     function printChecklist() {
-        // Set the header date for the print-out
-        const from = document.getElementById('dateFrom').value || "All Time";
-        const to = document.getElementById('dateTo').value || "";
-        document.getElementById('printDateRange').innerText = to ? `Report Range: ${from} to ${to}` : `Packing List: ${new Date().toLocaleDateString('en-GB')}`;
+        // Logic to set the Header Date
+        const fromVal = document.getElementById('dateFrom').value;
+        const toVal = document.getElementById('dateTo').value;
+        const headerEl = document.getElementById('printDateHeader');
+
+        if (fromVal && toVal) {
+            headerEl.innerText = `Order Range: ${fromVal} to ${toVal}`;
+        } else if (filteredData.length > 0) {
+            // If no range selected, pick the date from the first row of results
+            const displayDate = filteredData[0].jsDate.toLocaleDateString('en-GB');
+            headerEl.innerText = `Packing List for: ${displayDate}`;
+        } else {
+            headerEl.innerText = `Packing List - ${new Date().toLocaleDateString('en-GB')}`;
+        }
         
-        // Show packing checkboxes and hide profit columns temporarily
+        // Show the checkbox column
         const printCols = document.querySelectorAll('.print-visible');
         printCols.forEach(el => el.style.display = 'table-cell');
         
         window.print();
         
-        // Hide them again after printing
+        // Reset checkbox column display
         printCols.forEach(el => el.style.display = 'none');
     }
 
@@ -226,10 +229,7 @@
         if(!from || !to) return;
         const dFrom = new Date(from); dFrom.setHours(0, 0, 0, 0);
         const dTo = new Date(to); dTo.setHours(23, 59, 59, 999);
-        filteredData = rawData.filter(d => {
-            const itemDate = new Date(d.jsDate);
-            return itemDate >= dFrom && itemDate <= dTo;
-        });
+        filteredData = rawData.filter(d => d.jsDate >= dFrom && d.jsDate <= dTo);
         renderData(filteredData);
     }
 
