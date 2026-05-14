@@ -171,8 +171,8 @@
             <button type="button" class="btn-add-item" onclick="addNewItemRow()">+ Add New Item</button>
 
             <div class="ship-row" id="shippingDataRow" style="display:none;">
-                <div class="field-container"><label>Ship. Collected</label><input type="number" id="shipColl" placeholder="0" oninput="calcTotalProfit()"></div>
-                <div class="field-container"><label>Ship. Paid</label><input type="number" id="shipPaid" placeholder="0" oninput="calcTotalProfit()"></div>
+                <div class="field-container"><label>Ship. Collected</label><input type="number" id="shipColl" value="60" oninput="calcTotalProfit()"></div>
+                <div class="field-container"><label>Ship. Paid</label><input type="number" id="shipPaid" value="42" oninput="calcTotalProfit()"></div>
                 <div class="field-container">
                     <label>Summary</label>
                     <div style="font-size: 11px; color: #666;">Gross: <span id="grossTotalBox" style="font-weight:bold; color:#34495e;">₹ 0</span></div>
@@ -320,10 +320,10 @@
         if(confirm("Clear all items and price values?")) {
             document.getElementById('itemRowsContainer').innerHTML = '';
             document.getElementById('shippingDataRow').style.display = 'none';
-            document.getElementById('shipColl').value = '';
-            document.getElementById('shipPaid').value = '';
-            document.getElementById('totalProfitBox').innerText = '₹ 0';
-            document.getElementById('grossTotalBox').innerText = '₹ 0';
+            document.getElementById('shipColl').value = '60';
+            document.getElementById('shipPaid').value = '42';
+            document.getElementById('totalProfitBox').innerText = '₹ 18';
+            document.getElementById('grossTotalBox').innerText = '₹ 60';
         }
     }
 
@@ -382,7 +382,6 @@
             const formattedOrderID = `TJ-${datePart}-${Date.now().toString().slice(-6)}`;
             const uniqueKey = Date.now();
             
-            // FIX: Force DD/MM/YYYY format for Google Sheets consistency
             const day = String(now.getDate()).padStart(2, '0');
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const year = now.getFullYear();
@@ -555,10 +554,12 @@
     function saveToStorage() { localStorage.setItem('tanima_customers', JSON.stringify(customers)); }
     
     function clearInputs() { 
-        ['custName', 'house', 'po', 'location', 'district', 'state', 'pincode', 'phone', 'bulkPaste', 'shipColl', 'shipPaid'].forEach(id => {
+        ['custName', 'house', 'po', 'location', 'district', 'state', 'pincode', 'phone', 'bulkPaste'].forEach(id => {
             const el = document.getElementById(id);
             if(el) el.value = '';
         });
+        document.getElementById('shipColl').value = '60';
+        document.getElementById('shipPaid').value = '42';
         document.getElementById('itemRowsContainer').innerHTML = '';
         document.getElementById('shippingDataRow').style.display = 'none';
         document.getElementById('totalProfitBox').innerText = '₹ 0';
