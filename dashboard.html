@@ -33,9 +33,10 @@
         td { padding: 15px; border-bottom: 1px solid #f2f4f6; font-size: 0.9rem; }
         tr:hover { background: #fffcf0; }
         
+        .neg { color: var(--red); }
+        .pos { color: var(--green); }
         #loader { text-align: center; padding: 80px; font-weight: bold; color: var(--navy); font-size: 1.2rem; }
 
-        /* Print Specific Styling */
         @media print {
             body { background: white; padding: 0; }
             .toolbar, .stats-grid, header, .btn-sync, .btn-print, th::after { display: none !important; }
@@ -127,15 +128,17 @@
                 const qty = parseFloat(item.quantity) || 1;
                 const totalSale = parseFloat(item.salesprice) || parseFloat(item.saleprice) || 0;
                 const unitCost = parseFloat(item.costprice) || 0;
-                const totalProf = parseFloat(item.totalprofit) || (totalSale - unitCost);
-                const shipProf = parseFloat(item.shippingprofit) || 0;
+                const totalCost = unitCost; 
+                const totalProf = parseFloat(item.totalprofit) || (totalSale - totalCost);
+                const shipProf = parseFloat(item.shippingprofit) || parseFloat(item.shipprofit) || 0;
                 
                 return {
                     ...item,
                     quantity: qty,
                     jsDate: new Date(item.date),
                     rowSale: totalSale,       
-                    rowTotalCost: unitCost,  
+                    rowCost: unitCost,        
+                    rowTotalCost: totalCost,  
                     rowProf: totalProf,       
                     shipprofit: shipProf,
                     margin: totalSale > 0 ? ((totalProf / totalSale) * 100).toFixed(1) : 0
@@ -161,6 +164,8 @@
             tRev += row.rowSale;
             tProdProf += row.rowProf;
             tCost += row.rowTotalCost;
+            const sProf = parseFloat(row.shipprofit) || 0;
+            tShipProf += sProf;
             if(row.orderid) uniqueOrders.add(row.orderid);
 
             body.innerHTML += `
@@ -171,11 +176,11 @@
                     <td>${row.itemname}</td>
                     <td>${row.quantity}</td>
                     <td class="no-print">₹${Math.round(row.rowSale).toLocaleString()}</td>
-                    <td class="no-print">₹${Math.round(row.rowTotalCost).toLocaleString()}</td>
-                    <td class="no-print">₹${Math.round(row.rowProf).toLocaleString()}</td>
-                    <td class="no-print">₹${row.shipprofit.toLocaleString()}</td>
-                    <td class="no-print">${row.margin}%</td>
-                    <td class="print-visible" style="display:none; text-align:center; font-weight:bold;">[ &nbsp;&nbsp; ]</td>
+                    <td class="no-print" style="color:#666">₹${Math.round(row.rowTotalCost).toLocaleString()}</td>
+                    <td class="no-print" class="pos">₹${Math.round(row.rowProf).toLocaleString()}</td>
+                    <td class="no-print" style="color:var(--blue)">₹${sProf.toLocaleString()}</td>
+                    <td class="no-print" class="pos" style="font-weight:bold;">${row.margin}%</td>
+                    <td class="print-visible" style="display:none; text-align:center;">[ &nbsp;&nbsp; ]</td>
                 </tr>`;
         });
 
@@ -188,7 +193,6 @@
     }
 
     function printChecklist() {
-        // Logic to set the Header Date
         const fromVal = document.getElementById('dateFrom').value;
         const toVal = document.getElementById('dateTo').value;
         const headerEl = document.getElementById('printDateHeader');
@@ -196,20 +200,13 @@
         if (fromVal && toVal) {
             headerEl.innerText = `Order Range: ${fromVal} to ${toVal}`;
         } else if (filteredData.length > 0) {
-            // If no range selected, pick the date from the first row of results
             const displayDate = filteredData[0].jsDate.toLocaleDateString('en-GB');
             headerEl.innerText = `Packing List for: ${displayDate}`;
-        } else {
-            headerEl.innerText = `Packing List - ${new Date().toLocaleDateString('en-GB')}`;
         }
         
-        // Show the checkbox column
         const printCols = document.querySelectorAll('.print-visible');
         printCols.forEach(el => el.style.display = 'table-cell');
-        
         window.print();
-        
-        // Reset checkbox column display
         printCols.forEach(el => el.style.display = 'none');
     }
 
@@ -257,7 +254,6 @@
         });
         renderData(filteredData);
     }
-
     window.onload = fetchData;
 </script>
 </body>
