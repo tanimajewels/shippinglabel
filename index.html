@@ -366,7 +366,7 @@
     function processLabel() {
         const name = document.getElementById('custName').value;
         const pin = document.getElementById('pincode').value;
-        const source = document.getElementById('orderSource').value; // COLLECT SOURCE
+        const source = document.getElementById('orderSource').value;
         
         if(!name || !pin) { alert("Please enter Name and Pincode"); return; }
 
@@ -410,7 +410,7 @@
                 state: document.getElementById('state').value, 
                 pin, 
                 ph: document.getElementById('phone').value, 
-                source: source, // SAVE SOURCE
+                source: source, 
                 tracking: '', 
                 status: 'Pending', 
                 sales: salesData 
@@ -431,7 +431,6 @@
             updateStatus('syncing', i + 1, total);
             try {
                 const payload = {...customers[i]};
-                // PAYLOAD NOW INCLUDES SOURCE AUTOMATICALLY
                 await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({...payload, type: "LABEL"}), mode: "no-cors" });
                 if(customers[i].sales && customers[i].sales.items.length > 0) {
                     await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({...payload, type: "SALES"}), mode: "no-cors" });
@@ -488,7 +487,7 @@
             document.getElementById('state').value = record.state;
             document.getElementById('pincode').value = record.pin;
             document.getElementById('phone').value = record.ph;
-            if(record.source) document.getElementById('orderSource').value = record.source; // LOAD SOURCE ON EDIT
+            if(record.source) document.getElementById('orderSource').value = record.source;
             
             document.getElementById('itemRowsContainer').innerHTML = '';
             if(record.sales && record.sales.items.length > 0) {
@@ -540,7 +539,22 @@
         document.getElementById('dataCount').innerText = `Total: ${customers.length}`;
         filtered.slice().reverse().forEach((c) => {
             const masterIndex = customers.findIndex(item => item.id === c.id);
-            const sourceBadge = c.source ? `<small style="background:#eee; padding:2px 5px; border-radius:4px; color:#666; margin-left:5px;">${c.source}</small>` : '';
+            
+            // UPDATED BADGE LOGIC
+            let badgeStyle = "background:#eee; padding:2px 6px; border-radius:4px; color:#fff; margin-left:5px; font-weight:bold; font-size:9px; text-transform:uppercase;";
+            const s = c.source ? c.source.toLowerCase() : "";
+            
+            if(s.includes('instagram')) {
+                badgeStyle += "background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);";
+            } else if(s.includes('website')) {
+                badgeStyle += "background: #3498db;";
+            } else if(s.includes('whatsapp') || s.includes('direct')) {
+                badgeStyle += "background: #27ae60;";
+            } else {
+                badgeStyle += "background: #7f8c8d;";
+            }
+            
+            const sourceBadge = c.source ? `<small style="${badgeStyle}">${c.source}</small>` : '';
             
             body.innerHTML += `
                 <tr>
@@ -574,7 +588,7 @@
             const el = document.getElementById(id);
             if(el) el.value = '';
         });
-        document.getElementById('orderSource').value = 'Instagram'; // RESET SOURCE
+        document.getElementById('orderSource').value = 'Instagram';
         document.getElementById('shipColl').value = '60';
         document.getElementById('shipPaid').value = '42';
         document.getElementById('itemRowsContainer').innerHTML = '';
