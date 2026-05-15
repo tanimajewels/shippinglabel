@@ -20,7 +20,6 @@
         input, select { padding: 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 14px; }
         input:focus { border-color: #f1c40f; outline: none; }
         
-        /* --- SALES MODULE CSS --- */
         .sales-module { grid-column: span 2; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 10px; }
         .item-row { display: grid; gap: 10px; margin-bottom: 10px; align-items: flex-end; position: relative; }
         .item-row label { font-size: 10px; color: #888; }
@@ -155,9 +154,19 @@
             <label>Pincode</label>
             <input type="text" id="pincode">
         </div>
-        <div class="field-container full-width">
+        
+        <div class="field-container">
             <label>Mobile Number</label>
             <input type="text" id="phone">
+        </div>
+        <div class="field-container">
+            <label>Order Source</label>
+            <select id="orderSource">
+                <option value="Instagram">Instagram</option>
+                <option value="Website">Website</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Other">Other</option>
+            </select>
         </div>
 
         <div class="sales-module">
@@ -223,7 +232,7 @@
     let count = 0;
     let editId = null;
     const LOGO_URL = "qr.png"; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJPSdY0QzMj04xB3aaq378_1Z9hJzqzZjkhy-JMXTD2nahf96UN5bK9vFbvhlYJdlp/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzDXiwk8QlPR9y0o-d5euOCAKNcbeE7d6pOkIdubgrecy6W-LowdmAFczbQzDWWLGtHog/exec";
 
     window.onload = renderHistory;
 
@@ -357,6 +366,8 @@
     function processLabel() {
         const name = document.getElementById('custName').value;
         const pin = document.getElementById('pincode').value;
+        const source = document.getElementById('orderSource').value; // COLLECT SOURCE
+        
         if(!name || !pin) { alert("Please enter Name and Pincode"); return; }
 
         const salesData = {
@@ -368,7 +379,7 @@
         if (editId) {
             const index = customers.findIndex(c => c.id === editId);
             if (index !== -1) {
-                customers[index] = { ...customers[index], name, house: document.getElementById('house').value, po: document.getElementById('po').value, loc: document.getElementById('location').value, dist: document.getElementById('district').value, state: document.getElementById('state').value, pin, ph: document.getElementById('phone').value, sales: salesData };
+                customers[index] = { ...customers[index], name, house: document.getElementById('house').value, po: document.getElementById('po').value, loc: document.getElementById('location').value, dist: document.getElementById('district').value, state: document.getElementById('state').value, pin, ph: document.getElementById('phone').value, source, sales: salesData };
                 const currentQueueIds = Array.from(document.querySelectorAll('.label')).map(el => parseInt(el.getAttribute('data-id')));
                 document.getElementById('print-area').innerHTML = '';
                 customers.forEach(c => { if (currentQueueIds.includes(c.id)) addLabelToPrintArea(c); });
@@ -399,6 +410,7 @@
                 state: document.getElementById('state').value, 
                 pin, 
                 ph: document.getElementById('phone').value, 
+                source: source, // SAVE SOURCE
                 tracking: '', 
                 status: 'Pending', 
                 sales: salesData 
@@ -419,6 +431,7 @@
             updateStatus('syncing', i + 1, total);
             try {
                 const payload = {...customers[i]};
+                // PAYLOAD NOW INCLUDES SOURCE AUTOMATICALLY
                 await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({...payload, type: "LABEL"}), mode: "no-cors" });
                 if(customers[i].sales && customers[i].sales.items.length > 0) {
                     await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({...payload, type: "SALES"}), mode: "no-cors" });
@@ -475,6 +488,7 @@
             document.getElementById('state').value = record.state;
             document.getElementById('pincode').value = record.pin;
             document.getElementById('phone').value = record.ph;
+            if(record.source) document.getElementById('orderSource').value = record.source; // LOAD SOURCE ON EDIT
             
             document.getElementById('itemRowsContainer').innerHTML = '';
             if(record.sales && record.sales.items.length > 0) {
@@ -526,10 +540,12 @@
         document.getElementById('dataCount').innerText = `Total: ${customers.length}`;
         filtered.slice().reverse().forEach((c) => {
             const masterIndex = customers.findIndex(item => item.id === c.id);
+            const sourceBadge = c.source ? `<small style="background:#eee; padding:2px 5px; border-radius:4px; color:#666; margin-left:5px;">${c.source}</small>` : '';
+            
             body.innerHTML += `
                 <tr>
                     <td>${c.date}</td>
-                    <td><strong>${c.name}</strong><br><small style="color:#888">${c.orderID}</small></td>
+                    <td><strong>${c.name}</strong>${sourceBadge}<br><small style="color:#888">${c.orderID}</small></td>
                     <td>${c.ph}</td>
                     <td>${c.dist}</td>
                     <td><input type="text" class="tracking-input" value="${c.tracking}" onchange="updateRecord(${masterIndex}, 'tracking', this.value)"></td>
@@ -558,6 +574,7 @@
             const el = document.getElementById(id);
             if(el) el.value = '';
         });
+        document.getElementById('orderSource').value = 'Instagram'; // RESET SOURCE
         document.getElementById('shipColl').value = '60';
         document.getElementById('shipPaid').value = '42';
         document.getElementById('itemRowsContainer').innerHTML = '';
@@ -571,8 +588,8 @@
 
     function exportToCSV() {
         if(customers.length === 0) return;
-        let csv = "OrderID,Date,Name,House,PO,Loc,District,State,Pin,Phone,Tracking,Status\n";
-        customers.forEach(c => { csv += `"${c.orderID}","${c.date}","${c.name}","${c.house}","${c.po}","${c.loc}","${c.dist}","${c.state}","${c.pin}","${c.ph}","${c.tracking}","${c.status}"\n`; });
+        let csv = "OrderID,Date,Name,House,PO,Loc,District,State,Pin,Phone,Source,Tracking,Status\n";
+        customers.forEach(c => { csv += `"${c.orderID}","${c.date}","${c.name}","${c.house}","${c.po}","${c.loc}","${c.dist}","${c.state}","${c.pin}","${c.ph}","${c.source || ''}","${c.tracking}","${c.status}"\n`; });
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = 'Tanima_Backup.csv'; a.click();
     }
