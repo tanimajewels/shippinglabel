@@ -370,7 +370,9 @@
         let cleanText = raw;
         if (phoneMatch) cleanText = cleanText.replace(phoneMatch[0], "");
         if (pinMatch) cleanText = cleanText.replace(pinMatch[0], "");
-        cleanText = cleanText.replace(/contact|pin|mob|mobile|address|ph|phone|[:\-]/gi, "");
+        // Remove specific words using word boundaries (\b) and keep symbol removal separate
+        cleanText = cleanText.replace(/\b(contact|pin|mob|mobile|address|ph|phone)\b/gi, "");
+        cleanText = cleanText.replace(/[:\-]/g, "");
         const parts = cleanText.split(/[\n,]+/).map(item => item.trim()).filter(item => item !== "");
         if(parts[0]) document.getElementById('custName').value = toTitleCase(parts[0]);
         if(parts[1]) document.getElementById('house').value = toTitleCase(parts[1]);
