@@ -80,6 +80,23 @@
         .status-select { padding: 4px; font-size: 10px; color: white; border: none; border-radius: 4px; width: 80px; }
         .tracking-input { padding: 4px; font-size: 10px; border: 1px solid #ccc; width: 100px; }
         
+        .badge-unsynced {
+            background: #e74c3c;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: 5px;
+            display: inline-block;
+        }
+
+        /* UPDATED: Row Background Warning */
+        .row-unsynced {
+            background-color: #ffe6e6 !important;
+        }
+
         #print-area { display: grid; grid-template-columns: 1fr 1fr; width: 210mm; margin-top: 30px; }
         .label { border: 1px solid #000; padding: 12px; height: 68mm; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; background: white; page-break-inside: avoid; overflow: hidden; position: relative; }
         .label-btns { position: absolute; top: 5px; right: 5px; display: flex; gap: 4px; z-index: 10; }
@@ -379,7 +396,7 @@
         if (editId) {
             const index = customers.findIndex(c => c.id === editId);
             if (index !== -1) {
-                customers[index] = { ...customers[index], name, house: document.getElementById('house').value, po: document.getElementById('po').value, loc: document.getElementById('location').value, dist: document.getElementById('district').value, state: document.getElementById('state').value, pin, ph: document.getElementById('phone').value, source, sales: salesData };
+                customers[index] = { ...customers[index], name, house: document.getElementById('house').value, po: document.getElementById('po').value, loc: document.getElementById('location').value, dist: document.getElementById('district').value, state: document.getElementById('state').value, pin, ph: document.getElementById('phone').value, source, sales: salesData, synced: false };
                 const currentQueueIds = Array.from(document.querySelectorAll('.label')).map(el => parseInt(el.getAttribute('data-id')));
                 document.getElementById('print-area').innerHTML = '';
                 customers.forEach(c => { if (currentQueueIds.includes(c.id)) addLabelToPrintArea(c); });
@@ -413,7 +430,8 @@
                 source: source, 
                 tracking: '', 
                 status: 'Pending', 
-                sales: salesData 
+                sales: salesData,
+                synced: false 
             };
             customers.push(newCust);
             addLabelToPrintArea(newCust);
@@ -435,10 +453,17 @@
                 if(customers[i].sales && customers[i].sales.items.length > 0) {
                     await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify({...payload, type: "SALES"}), mode: "no-cors" });
                 }
+                
+                customers[i].synced = true; 
+                
             } catch (e) { 
                 updateStatus('error'); alert(`Error syncing record ${i+1}.`); return;
             }
         }
+        
+        saveToStorage(); 
+        renderHistory(); 
+        
         updateStatus('success');
         alert("All records synced successfully!");
     }
@@ -540,7 +565,6 @@
         filtered.slice().reverse().forEach((c) => {
             const masterIndex = customers.findIndex(item => item.id === c.id);
             
-            // UPDATED BADGE LOGIC
             let badgeStyle = "background:#eee; padding:2px 6px; border-radius:4px; color:#fff; margin-left:5px; font-weight:bold; font-size:9px; text-transform:uppercase;";
             const s = c.source ? c.source.toLowerCase() : "";
             
@@ -556,10 +580,13 @@
             
             const sourceBadge = c.source ? `<small style="${badgeStyle}">${c.source}</small>` : '';
             
+            const syncBadge = (c.synced === false) ? `<span class="badge-unsynced">☁️ Unsynced</span>` : '';
+            const rowClass = (c.synced === false) ? `class="row-unsynced"` : '';
+            
             body.innerHTML += `
-                <tr>
+                <tr ${rowClass}>
                     <td>${c.date}</td>
-                    <td><strong>${c.name}</strong>${sourceBadge}<br><small style="color:#888">${c.orderID}</small></td>
+                    <td><strong>${c.name}</strong>${sourceBadge}${syncBadge}<br><small style="color:#888">${c.orderID}</small></td>
                     <td>${c.ph}</td>
                     <td>${c.dist}</td>
                     <td><input type="text" class="tracking-input" value="${c.tracking}" onchange="updateRecord(${masterIndex}, 'tracking', this.value)"></td>
