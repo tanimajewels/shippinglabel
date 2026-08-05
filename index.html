@@ -471,36 +471,36 @@
     }
 
     function addLabelToPrintArea(data) {
-        const area = document.getElementById('print-area');
-        const div = document.createElement('div');
-        div.className = 'label';
-        div.setAttribute('data-id', data.id);
-        div.innerHTML = `
-            <div class="label-btns">
-                <button class="l-edit" onclick="editLabel(this.parentElement.parentElement)">Edit</button>
-                <button class="l-copy" onclick="copyLabel(this.parentElement.parentElement)">C</button>
-                <button class="l-del" onclick="removeLabel(this.parentElement.parentElement)">X</button>
+    const area = document.getElementById('print-area');
+    const div = document.createElement('div');
+    div.className = 'label';
+    div.setAttribute('data-id', data.id);
+    div.innerHTML = `
+        <div class="label-btns">
+            <button class="l-edit" onclick="editLabel(this.parentElement.parentElement)">Edit</button>
+            <button class="l-copy" onclick="copyLabel(this.parentElement.parentElement)">C</button>
+            <button class="l-del" onclick="removeLabel(this.parentElement.parentElement)">X</button>
+        </div>
+        <div class="to-section">
+            <div class="address-text">
+                <strong>To,</strong><br>
+                <span class="bold-data">${data.name}</span><br>
+                ${data.house}${data.house ? ',' : ''} ${data.po}<br>
+                ${data.loc}${data.loc ? ',' : ''} ${data.dist}<br>
+                ${data.state} - <strong>PIN: ${data.pin}</strong><br>
+                <strong>Mob: ${data.ph}</strong>
             </div>
-            <div class="to-section">
-                <div class="address-text">
-                    <strong>To,</strong><br>
-                    <span class="bold-data">${data.name}</span><br>
-                    ${data.house}${data.house ? ',' : ''} ${data.po}<br>
-                    ${data.loc}${data.loc ? ',' : ''} ${data.dist}<br>
-                    ${data.state} - <strong>PIN: ${data.pin}</strong><br>
-                    <strong>Mob: ${data.ph}</strong>
-                </div>
-                <div class="logo-container"><img src="${LOGO_URL}" alt="Logo"></div>
-            </div>
-            <div class="from-section">
-                <strong>From,</strong><br>
-                <strong>SAIVANDANA KB</strong>, Kattany House, PO Kanjany,<br>
-                Thrissur, Kerala - <strong>680612</strong>. MOB: <strong>9846797894</strong>
-            </div>`;
-        area.appendChild(div);
-        count = document.querySelectorAll('.label').length;
-        updateCounter();
-    }
+            <div class="logo-container"><img src="${LOGO_URL}" alt="Logo"></div>
+        </div>
+        <div class="from-section">
+            <strong>From,</strong> <span style="font-size:10pt;">(CustomerID: 1213104089)</span><br>
+            <strong>SAIVANDANA KB</strong>, Kattany House, PO Kanjany,<br>
+            Thrissur, Kerala - <strong>680612</strong>. MOB: <strong>9846797894</strong>
+        </div>`;
+    area.appendChild(div);
+    count = document.querySelectorAll('.label').length;
+    updateCounter();
+}
 
     function editLabel(el) {
         const id = parseInt(el.getAttribute('data-id'));
